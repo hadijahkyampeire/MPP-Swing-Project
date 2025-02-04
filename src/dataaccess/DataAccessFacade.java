@@ -27,7 +27,21 @@ public class DataAccessFacade implements DataAccess {
 		mems.put(memberId, member);
 		saveToStorage(StorageType.MEMBERS, mems);	
 	}
-	
+
+	public void saveNewBook(Book book) {
+		HashMap<String, Book> books = readBooksMap();
+		String isbn = book.getIsbn();
+
+		if (books.containsKey(isbn)) {
+			System.out.println("Book with ISBN " + isbn + " already exists.");
+		} else {
+			books.put(isbn, book);
+			saveToStorage(StorageType.BOOKS, books);
+			System.out.println("Book saved successfully.");
+		}
+	}
+
+
 	@SuppressWarnings("unchecked")
 	public  HashMap<String,Book> readBooksMap() {
 		//Returns a Map with name/value pairs being
