@@ -50,7 +50,21 @@ public class DataAccessFacade implements DataAccess {
 		//   userId -> User
 		return (HashMap<String, User>)readFromStorage(StorageType.USERS);
 	}
-	
+
+	public User authenticateUser(String username, String password) {
+		// Get the map of users from storage
+		HashMap<String, User> users = readUserMap();
+
+		// Check if the username exists
+		User user = users.get(username);
+		if (user != null && user.getPassword().equals(password)) {
+			// Return the user object if credentials match
+			return user;
+		}
+
+		// Return null if authentication fails
+		return null;
+	}
 	
 	/////load methods - these place test data into the storage area
 	///// - used just once at startup  
