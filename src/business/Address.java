@@ -4,12 +4,12 @@ import java.io.Serializable;
 
 /* Immutable */
 final public class Address implements Serializable {
-	
 	private static final long serialVersionUID = -891229800414574888L;
 	private String street;
 	private String city;
 	private String state;
 	private String zip;
+
 	public Address(String street, String city, String state, String zip) {
 		this.street = street;
 		this.city = city;
@@ -29,6 +29,7 @@ final public class Address implements Serializable {
 	public String getZip() {
 		return zip;
 	}
+
 	@Override
 	public String toString() {
 		return "(" + street + ", " + city + ", " + zip + ")";

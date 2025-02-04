@@ -3,13 +3,11 @@ package dataaccess;
 import java.io.Serializable;
 
 final public class User implements Serializable {
-	
 	private static final long serialVersionUID = 5147265048973262104L;
-
 	private String id;
-	
 	private String password;
 	private Auth authorization;
+
 	User(String id, String pass, Auth  auth) {
 		this.id = id;
 		this.password = pass;
@@ -25,6 +23,7 @@ final public class User implements Serializable {
 	public Auth getAuthorization() {
 		return authorization;
 	}
+
 	@Override
 	public String toString() {
 		return "[" + id + ":" + password + ", " + authorization.toString() + "]";
