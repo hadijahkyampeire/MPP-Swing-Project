@@ -6,22 +6,21 @@ import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 
-
-
 public class Main {
 
 	public static void main(String[] args) {
-	      EventQueue.invokeLater(() -> 
+	      EventQueue.invokeLater(() ->
 	         {
-	            LibrarySystem.INSTANCE.setTitle("Omega and Oceane's Library Application");
-	            LibrarySystem.INSTANCE.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	            
-	            LibrarySystem.INSTANCE.init();
-	            centerFrameOnDesktop(LibrarySystem.INSTANCE);
-	            LibrarySystem.INSTANCE.setVisible(true);
+	            LoginWindow.INSTANCE.setTitle("Omega and Océane's Library Application");
+				LoginWindow.INSTANCE.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+				 LoginWindow.INSTANCE.init();
+				 LoginWindow.INSTANCE.pack(); // Ensures all components are sized properly
+				 centerFrameOnDesktop(LoginWindow.INSTANCE);
+				 LoginWindow.INSTANCE.setVisible(true);
 	         });
 	   }
-	   
+
 	   public static void centerFrameOnDesktop(Component f) {
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
 			int height = toolkit.getScreenSize().height;
