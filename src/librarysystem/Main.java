@@ -1,48 +1,33 @@
-package business;
+package librarysystem;
 
-import java.util.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Toolkit;
 
-import dataaccess.DataAccess;
-import dataaccess.DataAccessFacade;
+import javax.swing.JFrame;
+
+
 
 public class Main {
 
 	public static void main(String[] args) {
-		System.out.println(allWhoseZipContains3());
-		System.out.println(allHavingOverdueBook());
-		System.out.println(allHavingMultipleAuthors());
-
-	}
-	//Returns a list of all ids of LibraryMembers whose zipcode contains the digit 3
-	public static List<String> allWhoseZipContains3() {
-		DataAccess da = new DataAccessFacade();
-		Collection<LibraryMember> members = da.readMemberMap().values();
-		List<LibraryMember> mems = new ArrayList<>();
-		mems.addAll(members);
-		//implement
-		return null;
-		
-	}
-	//Returns a list of all ids of  LibraryMembers that have an overdue book
-	public static List<String> allHavingOverdueBook() {
-		DataAccess da = new DataAccessFacade();
-		Collection<LibraryMember> members = da.readMemberMap().values();
-		List<LibraryMember> mems = new ArrayList<>();
-		mems.addAll(members);
-		//implement
-		return null;
-		
-	}
-	
-	//Returns a list of all isbns of  Books that have multiple authors
-	public static List<String> allHavingMultipleAuthors() {
-		DataAccess da = new DataAccessFacade();
-		Collection<Book> books = da.readBooksMap().values();
-		List<Book> bs = new ArrayList<>();
-		bs.addAll(books);
-		//implement
-		return null;
-		
+	      EventQueue.invokeLater(() -> 
+	         {
+	            LibrarySystem.INSTANCE.setTitle("Mariam and Hadijah's Library Application");
+	            LibrarySystem.INSTANCE.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	            
+	            LibrarySystem.INSTANCE.init();
+	            centerFrameOnDesktop(LibrarySystem.INSTANCE);
+	            LibrarySystem.INSTANCE.setVisible(true);
+	         });
+	   }
+	   
+	   public static void centerFrameOnDesktop(Component f) {
+			Toolkit toolkit = Toolkit.getDefaultToolkit();
+			int height = toolkit.getScreenSize().height;
+			int width = toolkit.getScreenSize().width;
+			int frameHeight = f.getSize().height;
+			int frameWidth = f.getSize().width;
+			f.setLocation(((width - frameWidth) / 2), (height - frameHeight) / 3);
 		}
-
 }
