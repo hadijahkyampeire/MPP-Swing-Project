@@ -13,7 +13,7 @@ public class Main {
 	public static void main(String[] args) {
 	      EventQueue.invokeLater(() -> 
 	         {
-	            LibrarySystem.INSTANCE.setTitle("Mariam and Hadijah's Library Application");
+	            LibrarySystem.INSTANCE.setTitle("Omega and Oceane's Library Application");
 	            LibrarySystem.INSTANCE.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	            
 	            LibrarySystem.INSTANCE.init();
