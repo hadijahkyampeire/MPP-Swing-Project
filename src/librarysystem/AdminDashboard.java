@@ -1,5 +1,8 @@
 package librarysystem;
 
+import librarysystem.tables.BooksTablePanel;
+import librarysystem.tables.MembersTablePanel;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -14,22 +17,23 @@ public class AdminDashboard extends JFrame {
     private DefaultTableModel bookTableModel, memberTableModel;
     private JTextField searchBookTitle, searchBookISBN, searchMemberField;
     private JButton addNewBookButton, addNewMemberButton;
+    private JLabel tableTitle; // ✅ Dynamic Title for Books/Members
     private CardLayout cardLayout;
-    private JLabel tableTitle;
-    private JButton booksButton, membersButton;
+    private JButton booksButton, membersButton; // ✅ Track active button
+    private JPanel sideNavBar; // ✅ Sidebar Panel
 
     public AdminDashboard() {
         setTitle("Admin Dashboard");
-        setSize(900, 600);
+        setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
         // 🏷️ **Top Navigation Bar**
         JPanel topNavBar = new JPanel(new BorderLayout());
-        topNavBar.setBackground(Color.DARK_GRAY);
+        topNavBar.setBackground(new Color(0,31,63));
         topNavBar.setPreferredSize(new Dimension(getWidth(), 50));
 
-        JLabel logoLabel = new JLabel("📚 O's Library", SwingConstants.LEFT);
+        JLabel logoLabel = new JLabel("📚 Library Admin", SwingConstants.LEFT);
         logoLabel.setForeground(Color.WHITE);
         logoLabel.setFont(new Font("Arial", Font.BOLD, 16));
         topNavBar.add(logoLabel, BorderLayout.WEST);
@@ -45,13 +49,8 @@ public class AdminDashboard extends JFrame {
         JMenuItem logoutItem = new JMenuItem("Logout");
         logoutItem.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Logged Out!");
-            dispose(); // Close the dashboard
-
-
-            // ✅ Redirect to the Main Login Window
-            EventQueue.invokeLater(() -> {
-                LoginWindow.INSTANCE.setVisible(true);
-            });
+            dispose();
+            EventQueue.invokeLater(() -> LibrarySystem.INSTANCE.setVisible(true)); // ✅ Redirect to login
         });
         accountMenu.add(logoutItem);
         menuBar.add(accountMenu);
@@ -59,18 +58,19 @@ public class AdminDashboard extends JFrame {
 
         add(topNavBar, BorderLayout.NORTH);
 
-        // 📌 **Left Sidebar Navigation**
-        JPanel sideNavBar = new JPanel();
+        // 📌 **Left Sidebar Navigation (Full-Width Buttons)**
+        sideNavBar = new JPanel();
         sideNavBar.setLayout(new BoxLayout(sideNavBar, BoxLayout.Y_AXIS));
-        sideNavBar.setPreferredSize(new Dimension(120, getHeight()));
+        sideNavBar.setPreferredSize(new Dimension(140, getHeight()));
         sideNavBar.setBackground(Color.LIGHT_GRAY);
         sideNavBar.setBorder(new EmptyBorder(10, 5, 10, 5));
 
+        // ✅ Create Buttons with Sidebar Width Reference
         booksButton = createMenuButton("📖 Books");
         membersButton = createMenuButton("👥 Members");
 
         sideNavBar.add(booksButton);
-        sideNavBar.add(Box.createRigidArea(new Dimension(0, 5)));
+        sideNavBar.add(Box.createRigidArea(new Dimension(0, 5))); // ✅ Small spacing
         sideNavBar.add(membersButton);
 
         add(sideNavBar, BorderLayout.WEST);
@@ -99,34 +99,38 @@ public class AdminDashboard extends JFrame {
         setVisible(true);
     }
 
-    /** 📖 Creates a Styled Menu Button */
+    /** 📖 Creates a Styled Menu Button with Full-Width Stretch & Hover Effects */
     private JButton createMenuButton(String text) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.PLAIN, 14));
         button.setFocusPainted(false);
-        button.setBackground(Color.LIGHT_GRAY);
-        button.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
         button.setOpaque(true);
         button.setContentAreaFilled(true);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR)); // ✅ Pointer Cursor on Hover
 
-        // ✅ Default Sidebar Color
-        button.setBackground(new Color(230, 230, 230)); // Light Gray Background
+        // ✅ Stretch Button Across Sidebar Width
+        button.setPreferredSize(new Dimension(sideNavBar.getPreferredSize().width, 40));
+        button.setMaximumSize(new Dimension(sideNavBar.getPreferredSize().width, 40));
+        button.setMinimumSize(new Dimension(sideNavBar.getPreferredSize().width, 40));
+
+        // ✅ Default Sidebar Button Color (Light Gray)
+        button.setBackground(new Color(230, 230, 230));
         button.setForeground(Color.BLACK);
 
-        // ✅ Hover Effect (Light Blue)
+        // ✅ Hover Effect (Lighter Green)
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                if (!Objects.equals(button.getBackground(), new Color(50, 130, 200))) { // Keep active button unchanged
-                    button.setBackground(new Color(180, 220, 255)); // Light Blue on Hover
+                if (button.getBackground() != new Color(0, 64, 128)) { // Keep active button unchanged
+                    button.setBackground(new Color(173, 216, 230)); // ✅ Very Light Blue on Hover
                 }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                if (!Objects.equals(button.getBackground(), new Color(50, 130, 200))) {
-                    button.setBackground(new Color(230, 230, 230)); // Reset to Default
+                if (button.getBackground() != new Color(0, 64, 128)) {
+                    button.setBackground(new Color(224, 224, 224)); // Reset to Default
                 }
             }
         });
@@ -140,15 +144,24 @@ public class AdminDashboard extends JFrame {
         tableTitle.setText(panelName.equals("Books") ? "📖 Book List" : "👥 Member List");
 
         // ✅ Reset all buttons to default color
-        booksButton.setBackground(new Color(230, 230, 230));
-        membersButton.setBackground(new Color(230, 230, 230));
-
+        booksButton.setBackground(new Color(224, 224, 224));
+        membersButton.setBackground(new Color(224, 224, 224));
         booksButton.setForeground(Color.BLACK);
         membersButton.setForeground(Color.BLACK);
 
-        // ✅ Set Active Button Color (Dark Blue)
-        activeButton.setBackground(new Color(50, 130, 200));
+        // ✅ Set Active Button Color (Navy Blue)
+        activeButton.setBackground(new Color(0, 31, 63)); // ✅ Navy Blue
         activeButton.setForeground(Color.WHITE);
+
+        // ✅ Stretch Active Button Across Sidebar Width
+        activeButton.setOpaque(true);
+        activeButton.setBorderPainted(false);
+        activeButton.setFocusPainted(false);
+        activeButton.setContentAreaFilled(true);
+
+        // ✅ Force UI Update to Reflect Changes
+        sideNavBar.revalidate();
+        sideNavBar.repaint();
     }
 
     /** 📚 **Creates the Books Table Panel** */
@@ -162,32 +175,50 @@ public class AdminDashboard extends JFrame {
 
         // 🔍 Search & Add Book Panel (Above Table)
         JPanel topPanel = new JPanel(new BorderLayout());
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        searchBookTitle = new JTextField(20);
-        searchBookTitle.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true)); // ✅ Rounded Border
-        searchBookISBN = new JTextField(20);
+        JPanel searchPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 10); // ✅ Add spacing between elements
+
+// ✅ **Search by Title - Column 1**
+        gbc.gridx = 0; // First Column
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0; // Allow field to expand
+        searchPanel.add(new JLabel("Search by Title:"), gbc);
+
+        gbc.gridy = 1; // Move to next row (same column)
+        searchBookTitle = new JTextField();
+        searchBookTitle.setPreferredSize(new Dimension(200, 30));
+        searchBookTitle.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+        searchPanel.add(searchBookTitle, gbc);
+
+// ✅ **Search by ISBN - Column 2**
+        gbc.gridx = 1; // Second Column
+        gbc.gridy = 0; // Back to first row
+        searchPanel.add(new JLabel("Search by ISBN:"), gbc);
+
+        gbc.gridy = 1; // Move to next row (same column)
+        searchBookISBN = new JTextField();
+        searchBookISBN.setPreferredSize(new Dimension(200, 30));
         searchBookISBN.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+        searchPanel.add(searchBookISBN, gbc);
 
-        searchPanel.add(new JLabel("Search by Title:"));
-        searchPanel.add(searchBookTitle);
-//        searchPanel.add(new JLabel("Search by ISBN:"));
-//        searchPanel.add(searchBookISBN);
-
-        addNewBookButton = new JButton("➕ Add New Book");
-        addNewBookButton.setFont(new Font("Arial", Font.BOLD, 12));
-        addNewBookButton.setPreferredSize(new Dimension(140, 35)); // ✅ Fixed Size
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        addNewBookButton = createActionButton("➕ Add New Book");
         addNewBookButton.addActionListener(e -> new BookWindow());
 
+        buttonPanel.add(addNewBookButton);
+
         topPanel.add(searchPanel, BorderLayout.WEST);
-        topPanel.add(addNewBookButton, BorderLayout.EAST);
+        topPanel.add(buttonPanel, BorderLayout.EAST);
         panel.add(topPanel, BorderLayout.CENTER);
 
         // 📖 Books Table
-        String[] bookColumns = {"ISBN", "Title", "Authors", "Max Checkout"};
-        bookTableModel = new DefaultTableModel(bookColumns, 0);
-        bookTable = new JTable(bookTableModel);
-        panel.add(new JScrollPane(bookTable), BorderLayout.SOUTH);
+        JPanel booksPanel = new BooksTablePanel();
+        contentPanel.add(booksPanel, "Books");
+        panel.add(booksPanel, BorderLayout.SOUTH);
 
         return panel;
     }
@@ -211,22 +242,50 @@ public class AdminDashboard extends JFrame {
         searchPanel.add(new JLabel("Search by Name, ID, Address:"));
         searchPanel.add(searchMemberField);
 
-        addNewMemberButton = new JButton("➕ Add New Member");
-        addNewMemberButton.setFont(new Font("Arial", Font.BOLD, 12));
-        addNewMemberButton.setPreferredSize(new Dimension(140, 35));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        addNewMemberButton = createActionButton("➕ Add New Member");
         addNewMemberButton.addActionListener(e -> new LibraryMemberWindow());
+        buttonPanel.add(addNewMemberButton);
 
         topPanel.add(searchPanel, BorderLayout.WEST);
-        topPanel.add(addNewMemberButton, BorderLayout.EAST);
+        topPanel.add(buttonPanel, BorderLayout.EAST);
         panel.add(topPanel, BorderLayout.CENTER);
 
         // 👥 Members Table
-        String[] memberColumns = {"Member ID", "First Name", "Last Name", "Address", "Phone Number", "No. of Checkouts", "Actions"};
-        memberTableModel = new DefaultTableModel(memberColumns, 0);
-        memberTable = new JTable(memberTableModel);
-        panel.add(new JScrollPane(memberTable), BorderLayout.SOUTH);
+        JPanel membersTablePanel = new MembersTablePanel();
+        panel.add(membersTablePanel, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    private JButton createActionButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setPreferredSize(new Dimension(160, 35)); // ✅ Fixed Compact Size
+        button.setBackground(new Color(0, 31, 63)); // ✅ Navy Blue (Matches Top Nav)
+        button.setForeground(Color.WHITE);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // ✅ Force Background Color to Apply
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false); // Removes default border effect
+
+        // ✅ Hover Effect (Light Blue)
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(new Color(0, 64, 128)); // ✅ Lighter Blue on Hover
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(new Color(0, 31, 63)); // ✅ Reset to Navy Blue
+            }
+        });
+
+        return button;
     }
 
     public static void open() {

@@ -7,6 +7,7 @@ import rulesets.MemberRuleSet;
 import rulesets.RuleException;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,43 +23,51 @@ public class LibraryMemberWindow extends JFrame {
         setTitle("Add New Library Member");
         setSize(600, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new GridLayout(9, 2, 10, 10));
+        setLayout(new BorderLayout());
 
-        add(new JLabel("Member ID:"));
+        JPanel formPanel = new JPanel(new GridLayout(9, 2, 10, 10));
+        formPanel.setBorder(new EmptyBorder(20, 40, 20, 40)); // ✅ Padding around the form
+
+
+        formPanel.add(new JLabel("Member ID:"));
         memberIdField = new JTextField();
-        add(memberIdField);
+        formPanel.add(memberIdField);
 
-        add(new JLabel("First Name:"));
+        formPanel.add(new JLabel("First Name:"));
         firstNameField = new JTextField();
-        add(firstNameField);
+        formPanel.add(firstNameField);
 
-        add(new JLabel("Last Name:"));
+        formPanel.add(new JLabel("Last Name:"));
         lastNameField = new JTextField();
-        add(lastNameField);
+        formPanel.add(lastNameField);
 
-        add(new JLabel("Street:"));
+        formPanel.add(new JLabel("Street:"));
         streetField = new JTextField();
-        add(streetField);
+        formPanel.add(streetField);
 
-        add(new JLabel("City:"));
+        formPanel.add(new JLabel("City:"));
         cityField = new JTextField();
-        add(cityField);
+        formPanel.add(cityField);
 
-        add(new JLabel("State:"));
+        formPanel.add(new JLabel("State:"));
         stateField = new JTextField();
-        add(stateField);
+        formPanel.add(stateField);
 
-        add(new JLabel("Zip:"));
+        formPanel.add(new JLabel("Zip:"));
         zipField = new JTextField();
-        add(zipField);
+        formPanel.add(zipField);
 
-        add(new JLabel("Phone Number:"));
+        formPanel.add(new JLabel("Phone Number:"));
         phoneField = new JTextField();
-        add(phoneField);
+        formPanel.add(phoneField);
 
+        add(formPanel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         saveMemberButton = new JButton("Save Member");
         saveMemberButton.setEnabled(false); // Initially disabled
-        add(saveMemberButton);
+        buttonPanel.add(saveMemberButton);
+        add(buttonPanel, BorderLayout.SOUTH);
 
         saveMemberButton.addActionListener(new ActionListener() {
             @Override
