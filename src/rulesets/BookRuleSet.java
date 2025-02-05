@@ -23,10 +23,7 @@ public class BookRuleSet implements RuleSet {
     public void applyRules(Component ob) throws RuleException {
         bookWindow = (BookWindow) ob;
         nonEmptyRule();
-        isbnNumericRule();
-        isbn10Or13DigitsRule();
-        isbn10DigitsFirstNumberRule();
-        isbn13DigitsFirstThreeRule();
+        isbnFormatRule();
         borrowPeriodRule();
         authorsRule();
     }
@@ -40,33 +37,14 @@ public class BookRuleSet implements RuleSet {
         }
     }
 
-    private void isbnNumericRule() throws RuleException {
+    private void isbnFormatRule() throws RuleException {
         String isbn = bookWindow.getIsbnValue().trim();
-        try {
-            Long.parseLong(isbn);
-        } catch (NumberFormatException e) {
-            throw new RuleException("ISBN must be numeric.");
-        }
-    }
 
-    private void isbn10Or13DigitsRule() throws RuleException {
-        String isbn = bookWindow.getIsbnValue().trim();
-        if (isbn.length() != 10 && isbn.length() != 13) {
-            throw new RuleException("ISBN must be either 10 or 13 digits.");
-        }
-    }
+        // ✅ Define the correct pattern for "XX-YYYYYY"
+        String isbnPattern = "\\d{2}-\\d{5}";
 
-    private void isbn10DigitsFirstNumberRule() throws RuleException {
-        String isbn = bookWindow.getIsbnValue().trim();
-        if (isbn.length() == 10 && !(isbn.startsWith("0") || isbn.startsWith("1"))) {
-            throw new RuleException("ISBN of 10 digits must start with 0 or 1.");
-        }
-    }
-
-    private void isbn13DigitsFirstThreeRule() throws RuleException {
-        String isbn = bookWindow.getIsbnValue().trim();
-        if (isbn.length() == 13 && !(isbn.startsWith("978") || isbn.startsWith("979"))) {
-            throw new RuleException("If ISBN has 13 digits, it must start with 978 or 979.");
+        if (!isbn.matches(isbnPattern)) {
+            throw new RuleException("ISBN must follow the format XX-YYYYYY (e.g., 23-11451)");
         }
     }
 
