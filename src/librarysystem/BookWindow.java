@@ -25,12 +25,12 @@ public class BookWindow extends JFrame {
     private JList<String> authorList;
     private List<Author> authors = new ArrayList<>();
     public JPanel overlay;
-    private BooksTablePanel booksTablePanel;
+    private static BooksTablePanel booksTablePanel;
 
     // Persistance Layer
     private DataAccessFacade dataAccess = new DataAccessFacade();
 
-    public BookWindow() {
+    public BookWindow(BooksTablePanel booksTablePanel) {
         this.booksTablePanel = booksTablePanel;
         setTitle("Add New Book");
         setSize(600, 500);
@@ -126,6 +126,9 @@ public class BookWindow extends JFrame {
                     // save  book to storage
                     dataAccess.saveNewBook(book);
 
+                    // ✅ Refresh Table Data
+                    booksTablePanel.loadBooksData();
+
                     JOptionPane.showMessageDialog(BookWindow.this, "Book added successfully!");
                     dispose();
                 } catch (RuleException ex) {
@@ -176,6 +179,6 @@ public class BookWindow extends JFrame {
     }
 
     public static void main(String[] args) {
-        new BookWindow();
+        new BookWindow(booksTablePanel);
     }
 }

@@ -7,9 +7,14 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
+import java.util.regex.PatternSyntaxException;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 public class AdminDashboard extends JFrame {
     private JPanel contentPanel;
@@ -21,8 +26,11 @@ public class AdminDashboard extends JFrame {
     private CardLayout cardLayout;
     private JButton booksButton, membersButton; // ✅ Track active button
     private JPanel sideNavBar; // ✅ Sidebar Panel
+    private BooksTablePanel booksTablePanel;
 
     public AdminDashboard() {
+        booksTablePanel = new BooksTablePanel();
+        bookTable = booksTablePanel.getBookTable();
         setTitle("Admin Dashboard");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -173,55 +181,54 @@ public class AdminDashboard extends JFrame {
         tableTitle.setFont(new Font("Arial", Font.BOLD, 18));
         panel.add(tableTitle, BorderLayout.NORTH);
 
-        // 🔍 Search & Add Book Panel (Above Table)
+        // 🔍 **Search & Add Book Panel**
         JPanel topPanel = new JPanel(new BorderLayout());
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
 
-        JPanel searchPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 10); // ✅ Add spacing between elements
-
-// ✅ **Search by Title - Column 1**
-        gbc.gridx = 0; // First Column
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0; // Allow field to expand
-        searchPanel.add(new JLabel("Search by Title:"), gbc);
-
-        gbc.gridy = 1; // Move to next row (same column)
-        searchBookTitle = new JTextField();
-        searchBookTitle.setPreferredSize(new Dimension(200, 30));
+        JLabel titleLabel = new JLabel("Search by Title:");
+        searchBookTitle = new JTextField(20);
+        searchBookTitle.setFont(new Font("Arial", Font.PLAIN, 14));
         searchBookTitle.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
-        searchPanel.add(searchBookTitle, gbc);
+        searchBookTitle.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filterTable(searchBookTitle.getText(), 1); }
+            public void removeUpdate(DocumentEvent e) { filterTable(searchBookTitle.getText(), 1); }
+            public void changedUpdate(DocumentEvent e) { filterTable(searchBookTitle.getText(), 1); }
+        });
 
-// ✅ **Search by ISBN - Column 2**
-        gbc.gridx = 1; // Second Column
-        gbc.gridy = 0; // Back to first row
-        searchPanel.add(new JLabel("Search by ISBN:"), gbc);
-
-        gbc.gridy = 1; // Move to next row (same column)
-        searchBookISBN = new JTextField();
-        searchBookISBN.setPreferredSize(new Dimension(200, 30));
+        JLabel isbnLabel = new JLabel("Search by ISBN:");
+        searchBookISBN = new JTextField(20);
+        searchBookISBN.setFont(new Font("Arial", Font.PLAIN, 14));
         searchBookISBN.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
-        searchPanel.add(searchBookISBN, gbc);
+        searchBookISBN.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filterTable(searchBookISBN.getText(), 0); }
+            public void removeUpdate(DocumentEvent e) { filterTable(searchBookISBN.getText(), 0); }
+            public void changedUpdate(DocumentEvent e) { filterTable(searchBookISBN.getText(), 0); }
+        });
 
+        // ✅ Add Components to Search Panel
+        searchPanel.add(titleLabel);
+        searchPanel.add(searchBookTitle);
+        searchPanel.add(isbnLabel);
+        searchPanel.add(searchBookISBN);
+
+        // ✅ Add New Book Button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         addNewBookButton = createActionButton("➕ Add New Book");
-        addNewBookButton.addActionListener(e -> new BookWindow());
-
+        addNewBookButton.addActionListener(e -> new BookWindow(booksTablePanel)); // ✅ Pass Reference
         buttonPanel.add(addNewBookButton);
 
+        // ✅ Add Panels to Top Section
         topPanel.add(searchPanel, BorderLayout.WEST);
         topPanel.add(buttonPanel, BorderLayout.EAST);
-        panel.add(topPanel, BorderLayout.CENTER);
+        panel.add(topPanel, BorderLayout.NORTH);
 
-        // 📖 Books Table
-        JPanel booksPanel = new BooksTablePanel();
-        contentPanel.add(booksPanel, "Books");
-        panel.add(booksPanel, BorderLayout.SOUTH);
+        // 📖 **Books Table**
+        booksTablePanel = new BooksTablePanel(); // ✅ Initialize Here
+        panel.add(booksTablePanel, BorderLayout.CENTER); // ✅ Add Table Panel
 
         return panel;
     }
+
 
     /** 👥 **Creates the Members Table Panel** */
     private JPanel createMembersPanel() {
@@ -292,6 +299,25 @@ public class AdminDashboard extends JFrame {
         SwingUtilities.invokeLater(() -> {
             new AdminDashboard().setVisible(true);
         });
+    }
+
+    private void filterTable(String query, int columnIndex) {
+        if (booksTablePanel == null || booksTablePanel.getBookTable() == null || booksTablePanel.getSorter() == null) {
+            System.err.println("Error: BooksTablePanel or bookTable is not initialized.");
+            return;
+        }
+
+        TableRowSorter<TableModel> sorter = booksTablePanel.getSorter();
+
+        if (query.trim().isEmpty()) {
+            sorter.setRowFilter(null); // ✅ Reset filter when query is empty
+        } else {
+            try {
+                sorter.setRowFilter(RowFilter.regexFilter("(?i)" + query, columnIndex)); // ✅ Case-insensitive search
+            } catch (PatternSyntaxException e) {
+                sorter.setRowFilter(null); // ✅ Prevents crashing due to invalid regex input
+            }
+        }
     }
 
     public static void main(String[] args) {
