@@ -9,6 +9,8 @@ import librarysystem.BookWindow;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
@@ -19,17 +21,19 @@ public class BooksTablePanel extends JPanel {
     private DefaultTableModel bookTableModel;
     private DataAccessFacade dataAccess;
     private TableRowSorter<TableModel> sorter;
+    private BooksTablePanel booksTablePanel;
 
     public BooksTablePanel() {
+        booksTablePanel = this;
         setLayout(new BorderLayout());
         dataAccess = new DataAccessFacade();
 
         // ✅ Table Columns
-        String[] bookColumns = {"ISBN", "Title", "Authors", "Copies", "Availability Status", "Max Checkout(days)", "Actions"};
+        String[] bookColumns = {"ISBN", "Title", "Authors", "Copies", "Availability Status", "Max Checkout(days)", "Add New Copy", "Actions", "Details"};
         bookTableModel = new DefaultTableModel(bookColumns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 6; // ✅ Only the Actions column is editable (for button)
+                return (column == 6 || column == 7);// The Actions and add copy column is editable (for button)
             }
         };
 
@@ -64,6 +68,8 @@ public class BooksTablePanel extends JPanel {
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(bookTableModel);
         sorter.setSortable(4, false);
         sorter.setSortable(6, false);
+        sorter.setSortable(7, false);
+        sorter.setSortable(8, false);
         bookTable.setRowSorter(sorter);
 
         // ✅ Set Renderers
@@ -75,9 +81,12 @@ public class BooksTablePanel extends JPanel {
         authorsColumn.setCellRenderer(new AuthorsRenderer());
 
         // ✅ Customize "Actions" Column with Three Dots Button
-        TableColumn actionsColumn = bookTable.getColumnModel().getColumn(6);
+        TableColumn actionsColumn = bookTable.getColumnModel().getColumn(7);
         actionsColumn.setCellRenderer(new ActionButtonRenderer());
         actionsColumn.setCellEditor(new ActionButtonEditor(new JCheckBox()));
+
+        bookTable.getColumn("Add New Copy").setCellRenderer(new AddCopyButtonRenderer());
+        bookTable.getColumn("Add New Copy").setCellEditor(new AddCopyButtonEditor(new JCheckBox()));
 
         // ✅ Add Mouse Listener for Click to Expand
         bookTable.addMouseListener(new MouseAdapter() {
@@ -102,10 +111,13 @@ public class BooksTablePanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int row = bookTable.rowAtPoint(e.getPoint());
-                int column = bookTable.columnAtPoint(e.getPoint());
+                int col = bookTable.columnAtPoint(e.getPoint());
 
-                if (column == 0) { // ✅ Clicking first column opens details
+                // Check if the user clicked the last column (column 7)
+                if (col == 8 && row >= 0) {
+                    // Trigger expand
                     toggleRowExpansion(row);
+                    bookTable.setSelectionBackground(new Color(230, 230, 230));
                 }
             }
         });
@@ -133,6 +145,7 @@ public class BooksTablePanel extends JPanel {
                 authorListModel.addElement(author.getFirstName() + " " + author.getLastName() + " - " + author.getAddress());
             }
             JList<String> authorList = new JList<>(authorListModel);
+            System.out.println(book.getAuthors().toString() + "Authors");
             detailsPanel.add(new JLabel("📚 Authors:"), BorderLayout.NORTH);
             detailsPanel.add(new JScrollPane(authorList), BorderLayout.CENTER);
 
@@ -151,6 +164,51 @@ public class BooksTablePanel extends JPanel {
         }
     }
 
+    public class AddCopyButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private String isbn;
+        private JTable table;
+
+        public AddCopyButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+            button = new JButton("Add New Copy");
+            button.setFont(new Font("Arial", Font.PLAIN, 12));
+            button.setFocusPainted(false);
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // Get the ISBN from the table
+                    int row = table.convertRowIndexToModel(table.getEditingRow());
+                    isbn = (String) table.getModel().getValueAt(row, 0); // Assuming ISBN is in the first column
+
+                    // Open the AddBookCopyWindow
+                    HashMap<String, Book> books = dataAccess.readBooksMap();
+                    Book book = books.get(isbn);
+                    if (book != null) {
+                        book.addCopy();
+                        dataAccess.updateBooksStorage(books); // Save changes
+                        loadBooksData();
+                    } else {
+                        JOptionPane.showMessageDialog(table, "Book not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+
+                    // Stop editing
+                    fireEditingStopped();
+                }
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            this.table = table;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return isbn;
+        }
+    }
     /** 📌 **Custom Renderer for Actions Column** (Displays Three Dots Button) */
     private class ActionButtonRenderer extends JButton implements TableCellRenderer {
         public ActionButtonRenderer() {
@@ -185,15 +243,12 @@ public class BooksTablePanel extends JPanel {
                 JPopupMenu menu = new JPopupMenu();
                 JMenuItem edit = new JMenuItem("Edit");
                 JMenuItem delete = new JMenuItem("Delete");
-                JMenuItem addCopy = new JMenuItem("Add Copy");
 
                 edit.addActionListener(evt -> editBook(isbn));
                 delete.addActionListener(evt -> deleteBook(isbn));
-                addCopy.addActionListener(evt -> addBookCopy(isbn));
 
                 menu.add(edit);
                 menu.add(delete);
-                menu.add(addCopy);
                 menu.show(button, button.getWidth() / 2, button.getHeight() / 2);
             });
         }
@@ -219,13 +274,23 @@ public class BooksTablePanel extends JPanel {
         }
     }
 
+    public void filterTable(String searchText) {
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(bookTableModel);
+        bookTable.setRowSorter(sorter);
 
+        if (searchText.length() == 0) {
+            sorter.setRowFilter(null);
+        } else {
+            // Create a RowFilter that matches any of the columns (ID, Name, Address, Phone)
+            RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter("(?i)" + searchText, 0, 1, 2, 3);
+            sorter.setRowFilter(rowFilter);
+        }
+    }
 
     /** ✅ Handle Book Actions */
     private void editBook(String isbn) {
-        JOptionPane.showMessageDialog(this, "Editing book with ISBN: " + isbn);
-        BooksTablePanel booksTablePanel = null;
-        new BookWindow(booksTablePanel); // Open Edit Window
+        Book book = dataAccess.readBooksMap().get(isbn);
+        new BookWindow(booksTablePanel, book, true); // Open Edit Window
     }
 
     private void deleteBook(String isbn) {
@@ -240,20 +305,6 @@ public class BooksTablePanel extends JPanel {
         }
     }
 
-    private void addBookCopy(String isbn) {
-        DataAccessFacade dataAccess = new DataAccessFacade();
-        HashMap<String, Book> books = dataAccess.readBooksMap();
-
-        if (books.containsKey(isbn)) {
-            Book book = books.get(isbn);
-            book.addCopy();  // ✅ Add a new copy
-            dataAccess.updateBooksStorage(books); // ✅ Save changes
-            loadBooksData();  // ✅ Refresh table
-            JOptionPane.showMessageDialog(this, "A new copy of \"" + book.getTitle() + "\" has been added!");
-        } else {
-            JOptionPane.showMessageDialog(this, "Error: Book not found!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
 
     public JTable getBookTable() {
         return bookTable; // ✅ Expose table reference for filtering
@@ -282,7 +333,7 @@ public class BooksTablePanel extends JPanel {
             String availabilityStatus = availableCopies + " available, " + (totalCopies - availableCopies) + " unavailable";
 
             // ✅ Add Row to Table
-            bookTableModel.addRow(new Object[]{isbn, title, displayAuthor, totalCopies, availabilityStatus, maxCheckout, "⋮"});
+            bookTableModel.addRow(new Object[]{isbn, title, displayAuthor, totalCopies, availabilityStatus, maxCheckout, "", "⋮", "View details"});
         }
     }
 

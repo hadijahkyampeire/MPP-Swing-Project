@@ -26,13 +26,17 @@ public class BookWindow extends JFrame {
     private List<Author> authors = new ArrayList<>();
     public JPanel overlay;
     private static BooksTablePanel booksTablePanel;
+    private Book book;
+    private boolean isEditMode;
 
     // Persistance Layer
     private DataAccessFacade dataAccess = new DataAccessFacade();
 
-    public BookWindow(BooksTablePanel booksTablePanel) {
+    public BookWindow(BooksTablePanel booksTablePanel, Book book, boolean isEditMode) {
         this.booksTablePanel = booksTablePanel;
-        setTitle("Add New Book");
+        this.book = book;
+        this.isEditMode = isEditMode;
+        setTitle(isEditMode ? "Editing" + book.getTitle() + "(" + book.getIsbn() + ")" : "Add New Book");
         setSize(600, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -104,12 +108,23 @@ public class BookWindow extends JFrame {
 
         // ✅ **Save Button (Centered)**
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        saveBookButton = new JButton("Save Book");
+        saveBookButton = new JButton(isEditMode ? "Update" : "Save Book");
         saveBookButton.setPreferredSize(new Dimension(150, 40)); // ✅ Bigger Button
         saveBookButton.setEnabled(false); // Initially disabled
         buttonPanel.add(saveBookButton);
         add(buttonPanel, BorderLayout.SOUTH); // ✅ Add Button Panel to Bottom
 
+        //Prepopulate
+        if(isEditMode && book != null) {
+            isbnField.setText(book.getIsbn());
+            titleField.setText(book.getTitle());
+            borrowPeriodComboBox.setSelectedItem(book.getMaxCheckoutLength() == 7 ? "7 days" : "21 days");
+            authorListModel.clear();
+            for (Author author : book.getAuthors()) {
+                authorListModel.addElement(author.getFirstName() + " " + author.getLastName());
+            }
+
+        }
         saveBookButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -129,7 +144,16 @@ public class BookWindow extends JFrame {
                     // ✅ Refresh Table Data
                     booksTablePanel.loadBooksData();
 
-                    JOptionPane.showMessageDialog(BookWindow.this, "Book added successfully!");
+                    if (isEditMode) {
+                        // Update existing book
+                        dataAccess.updateBook(book);
+                        JOptionPane.showMessageDialog(BookWindow.this, "Book updated successfully!");
+                    } else {
+                        // Save new book
+                        dataAccess.saveNewBook(book);
+                        JOptionPane.showMessageDialog(BookWindow.this, "Book added successfully!");
+                    }
+
                     dispose();
                 } catch (RuleException ex) {
                     JOptionPane.showMessageDialog(BookWindow.this, "Error: " + ex.getMessage(), "Validation Error", JOptionPane.ERROR_MESSAGE);
@@ -178,7 +202,4 @@ public class BookWindow extends JFrame {
         saveBookButton.setBackground(canEnable ? new Color(0, 31, 63) : Color.LIGHT_GRAY);
     }
 
-    public static void main(String[] args) {
-        new BookWindow(booksTablePanel);
-    }
 }
