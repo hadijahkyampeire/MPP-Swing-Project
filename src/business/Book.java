@@ -44,12 +44,21 @@ final public class Book implements Serializable {
 		return retVal;
 		
 	}
-	
+
 	public void addCopy() {
 		BookCopy[] newArr = new BookCopy[copies.length + 1];
 		System.arraycopy(copies, 0, newArr, 0, copies.length);
 		newArr[copies.length] = new BookCopy(this, copies.length +1, true);
 		copies = newArr;
+	}
+
+	private boolean isCopyNumberExists(int copyNumber) {
+		for (BookCopy copy : copies) {
+			if (copy.getCopyNum() == copyNumber) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	

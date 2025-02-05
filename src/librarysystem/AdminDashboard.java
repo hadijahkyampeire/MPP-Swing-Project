@@ -4,27 +4,40 @@ import librarysystem.tables.BooksTablePanel;
 import librarysystem.tables.MembersTablePanel;
 
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
+import java.util.regex.PatternSyntaxException;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 public class AdminDashboard extends JFrame {
     private JPanel contentPanel;
     private JTable bookTable, memberTable;
     private DefaultTableModel bookTableModel, memberTableModel;
-    private JTextField searchBookTitle, searchBookISBN, searchMemberField;
+    private JTextField searchBook, searchMemberField;
     private JButton addNewBookButton, addNewMemberButton;
     private JLabel tableTitle; // ✅ Dynamic Title for Books/Members
     private CardLayout cardLayout;
     private JButton booksButton, membersButton; // ✅ Track active button
     private JPanel sideNavBar; // ✅ Sidebar Panel
+    private BooksTablePanel booksTablePanel;
+    private MembersTablePanel membersTablePanel;
 
     public AdminDashboard() {
+        booksTablePanel = new BooksTablePanel();
+        bookTable = booksTablePanel.getBookTable();
+        membersTablePanel = new MembersTablePanel();
+        memberTable = membersTablePanel.getMemberTable();
         setTitle("Admin Dashboard");
-        setSize(1000, 700);
+        setSize(1200, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -66,12 +79,13 @@ public class AdminDashboard extends JFrame {
         sideNavBar.setBorder(new EmptyBorder(10, 5, 10, 5));
 
         // ✅ Create Buttons with Sidebar Width Reference
-        booksButton = createMenuButton("📖 Books");
         membersButton = createMenuButton("👥 Members");
+        booksButton = createMenuButton("📖 Books");
 
-        sideNavBar.add(booksButton);
-        sideNavBar.add(Box.createRigidArea(new Dimension(0, 5))); // ✅ Small spacing
+
         sideNavBar.add(membersButton);
+        sideNavBar.add(Box.createRigidArea(new Dimension(0, 5))); // ✅ Small spacing
+        sideNavBar.add(booksButton);
 
         add(sideNavBar, BorderLayout.WEST);
 
@@ -90,11 +104,11 @@ public class AdminDashboard extends JFrame {
         add(contentPanel, BorderLayout.CENTER);
 
         // 📌 **Navigation Actions**
-        booksButton.addActionListener(e -> switchPanel("Books", booksButton));
         membersButton.addActionListener(e -> switchPanel("Members", membersButton));
+        booksButton.addActionListener(e -> switchPanel("Books", booksButton));
 
         // ✅ Set default active button
-        switchPanel("Books", booksButton);
+        switchPanel("Members", membersButton);
 
         setVisible(true);
     }
@@ -167,61 +181,78 @@ public class AdminDashboard extends JFrame {
     /** 📚 **Creates the Books Table Panel** */
     private JPanel createBooksPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // 📌 **Title for Table**
         tableTitle = new JLabel("📖 Book List", SwingConstants.CENTER);
         tableTitle.setFont(new Font("Arial", Font.BOLD, 18));
+        tableTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         panel.add(tableTitle, BorderLayout.NORTH);
 
-        // 🔍 Search & Add Book Panel (Above Table)
+        // 🔍 **Search & Add Book Panel**
         JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-        JPanel searchPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 10); // ✅ Add spacing between elements
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-// ✅ **Search by Title - Column 1**
-        gbc.gridx = 0; // First Column
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0; // Allow field to expand
-        searchPanel.add(new JLabel("Search by Title:"), gbc);
+        JLabel titleLabel = new JLabel("Search by ISBN or Title:");
+        searchBook = new JTextField(20);
+        searchBook.setFont(new Font("Arial", Font.PLAIN, 14));
+        searchBook.setPreferredSize(new Dimension(searchBook.getPreferredSize().width, 30)); // Increase height of the search bar
+        searchBook.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GRAY, 1, true),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5) // Add padding inside the search field
+        ));
 
-        gbc.gridy = 1; // Move to next row (same column)
-        searchBookTitle = new JTextField();
-        searchBookTitle.setPreferredSize(new Dimension(200, 30));
-        searchBookTitle.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
-        searchPanel.add(searchBookTitle, gbc);
 
-// ✅ **Search by ISBN - Column 2**
-        gbc.gridx = 1; // Second Column
-        gbc.gridy = 0; // Back to first row
-        searchPanel.add(new JLabel("Search by ISBN:"), gbc);
+        // ✅ Add Components to Search Panel
+        searchPanel.add(titleLabel);
+        searchPanel.add(searchBook);
 
-        gbc.gridy = 1; // Move to next row (same column)
-        searchBookISBN = new JTextField();
-        searchBookISBN.setPreferredSize(new Dimension(200, 30));
-        searchBookISBN.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
-        searchPanel.add(searchBookISBN, gbc);
-
+        // ✅ Add New Book Button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         addNewBookButton = createActionButton("➕ Add New Book");
-        addNewBookButton.addActionListener(e -> new BookWindow());
-
+        addNewBookButton.addActionListener(e -> new BookWindow(booksTablePanel, null, false)); // ✅ Pass Reference
         buttonPanel.add(addNewBookButton);
 
+        // ✅ Add Panels to Top Section
         topPanel.add(searchPanel, BorderLayout.WEST);
         topPanel.add(buttonPanel, BorderLayout.EAST);
-        panel.add(topPanel, BorderLayout.CENTER);
 
-        // 📖 Books Table
-        JPanel booksPanel = new BooksTablePanel();
-        contentPanel.add(booksPanel, "Books");
-        panel.add(booksPanel, BorderLayout.SOUTH);
+        JPanel topContainer = new JPanel();
+        topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
+        topContainer.add(tableTitle);
+        topContainer.add(topPanel);
+
+        panel.add(topContainer, BorderLayout.NORTH);
+
+        // 📖 **Books Table**
+        booksTablePanel = new BooksTablePanel(); // ✅ Initialize Here
+        JTable bookTable = booksTablePanel.getBookTable();
+        bookTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        JScrollPane scrollPane = new JScrollPane(booksTablePanel.getBookTable());
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 128), 2)); // Navy blue border
+        scrollPane.setViewportBorder(null);
+
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding around the table
+        tablePanel.add(scrollPane, BorderLayout.CENTER);
+
+        panel.add(tablePanel, BorderLayout.CENTER);
+
+        searchBook.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String searchText = searchBook.getText().trim();
+                booksTablePanel.filterTable(searchText);
+            }
+        });
 
         return panel;
     }
+
 
     /** 👥 **Creates the Members Table Panel** */
     private JPanel createMembersPanel() {
@@ -230,30 +261,75 @@ public class AdminDashboard extends JFrame {
         // 📌 **Title for Table**
         tableTitle = new JLabel("👥 Member List", SwingConstants.CENTER);
         tableTitle.setFont(new Font("Arial", Font.BOLD, 18));
-        panel.add(tableTitle, BorderLayout.NORTH);
+        tableTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
         // 🔍 Search & Add Member Panel (Above Table)
         JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
+        JLabel searchLabel = new JLabel("Search by Name, ID, Address:");
         searchMemberField = new JTextField(20);
-        searchMemberField.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+        searchMemberField.setPreferredSize(new Dimension(searchMemberField.getPreferredSize().width, 30));
+        searchMemberField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GRAY, 1, true),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5) // Add padding inside the search field
+        ));
 
         searchPanel.add(new JLabel("Search by Name, ID, Address:"));
         searchPanel.add(searchMemberField);
 
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         addNewMemberButton = createActionButton("➕ Add New Member");
-        addNewMemberButton.addActionListener(e -> new LibraryMemberWindow());
+        addNewMemberButton.addActionListener(e -> new LibraryMemberWindow(membersTablePanel, null, false));
         buttonPanel.add(addNewMemberButton);
 
-        topPanel.add(searchPanel, BorderLayout.WEST);
-        topPanel.add(buttonPanel, BorderLayout.EAST);
-        panel.add(topPanel, BorderLayout.CENTER);
+        JPanel topContainer = new JPanel();
+        topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
+
+        // 2) Title goes first
+        topContainer.add(tableTitle);
+
+        JPanel searchAddRow = new JPanel(new BorderLayout());
+        // Left side: search label + text field
+        JPanel leftSearchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        leftSearchPanel.add(searchLabel);
+        leftSearchPanel.add(searchMemberField);
+
+        // Right side: add button
+        JPanel rightButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        rightButtonPanel.add(addNewMemberButton);
+
+        searchAddRow.add(leftSearchPanel, BorderLayout.WEST);
+        searchAddRow.add(rightButtonPanel, BorderLayout.EAST);
+
+        topContainer.add(searchAddRow);
+        panel.add(topContainer, BorderLayout.NORTH);
 
         // 👥 Members Table
-        JPanel membersTablePanel = new MembersTablePanel();
-        panel.add(membersTablePanel, BorderLayout.SOUTH);
+        membersTablePanel = new MembersTablePanel();
+        JTable memberTable = membersTablePanel.getMemberTable();
+        memberTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+
+        JScrollPane scrollPane = new JScrollPane(membersTablePanel.getMemberTable());
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 128), 2)); // Navy blue border
+        scrollPane.setViewportBorder(null);
+
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tablePanel.add(scrollPane, BorderLayout.CENTER);
+
+        panel.add(tablePanel, BorderLayout.CENTER);
+
+        searchMemberField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String searchText = searchMemberField.getText().trim();
+                membersTablePanel.filterTable(searchText);
+            }
+        });
 
         return panel;
     }

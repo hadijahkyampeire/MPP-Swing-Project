@@ -3,11 +3,13 @@ package librarysystem;
 import business.Address;
 import business.LibraryMember;
 import dataaccess.DataAccessFacade;
+import librarysystem.tables.MembersTablePanel;
 import rulesets.MemberRuleSet;
 import rulesets.RuleException;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,11 +18,18 @@ public class LibraryMemberWindow extends JFrame {
     private JTextField memberIdField, firstNameField, lastNameField, phoneField;
     private JTextField streetField, cityField, stateField, zipField;
     private JButton saveMemberButton;
+    private MembersTablePanel membersTablePanel;
+    private LibraryMember libraryMember;
+    private boolean isEditMode;
 
     private DataAccessFacade dataAccess = new DataAccessFacade();
 
-    public LibraryMemberWindow() {
-        setTitle("Add New Library Member");
+    public LibraryMemberWindow(MembersTablePanel membersTablePanel, LibraryMember libraryMember, boolean editMode) {
+        this.membersTablePanel = membersTablePanel;
+        this.libraryMember = libraryMember;
+        this.isEditMode = editMode;
+        setTitle(isEditMode ? "Editing" + libraryMember.getFirstName() +  " " + libraryMember.getLastName()
+                + "(" + libraryMember.getMemberId() + ")" : "Add New Library Member");
         setSize(600, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -64,10 +73,22 @@ public class LibraryMemberWindow extends JFrame {
         add(formPanel, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        saveMemberButton = new JButton("Save Member");
+        saveMemberButton = new JButton(isEditMode ? "Update Member" : "Save Member");
         saveMemberButton.setEnabled(false); // Initially disabled
         buttonPanel.add(saveMemberButton);
         add(buttonPanel, BorderLayout.SOUTH);
+
+        // Repopulate fields if in edit mode
+        if (isEditMode && libraryMember != null) {
+            memberIdField.setText(libraryMember.getMemberId());
+            firstNameField.setText(libraryMember.getFirstName());
+            lastNameField.setText(libraryMember.getLastName());
+            streetField.setText(libraryMember.getAddress().getStreet());
+            cityField.setText(libraryMember.getAddress().getCity());
+            stateField.setText(libraryMember.getAddress().getState());
+            zipField.setText(libraryMember.getAddress().getZip());
+            phoneField.setText(libraryMember.getTelephone());
+        }
 
         saveMemberButton.addActionListener(new ActionListener() {
             @Override
@@ -88,7 +109,20 @@ public class LibraryMemberWindow extends JFrame {
                     // save member to storage
                     dataAccess.saveNewMember(member);
 
-                    JOptionPane.showMessageDialog(LibraryMemberWindow.this, "Library Member added successfully!");
+                    membersTablePanel.loadMembersData();
+
+                    if (isEditMode) {
+                        // Update existing member
+                        dataAccess.updateMember(member);
+                        JOptionPane.showMessageDialog(LibraryMemberWindow.this, "Library Member updated successfully!");
+                    } else {
+                        // Save new member
+                        dataAccess.saveNewMember(member);
+                        JOptionPane.showMessageDialog(LibraryMemberWindow.this, "Library Member added successfully!");
+                    }
+                    // Reload table data
+                    membersTablePanel.loadMembersData();
+                    dispose();
                 } catch (RuleException ex) {
                     JOptionPane.showMessageDialog(LibraryMemberWindow.this, "Error: " + ex.getMessage(), "Validation Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -156,8 +190,5 @@ public class LibraryMemberWindow extends JFrame {
         return phoneField.getText().trim();
     }
 
-    public static void main(String[] args) {
-        new LibraryMemberWindow();
-    }
 }
 

@@ -23,6 +23,17 @@ public class Person implements Serializable {
 	public String getTelephone() {
 		return telephone;
 	}
+
+	@Override
+	public String toString() {
+		return "Person{" +
+				"firstName='" + firstName + '\'' +
+				", lastName='" + lastName + '\'' +
+				", telephone='" + telephone + '\'' +
+				", address=" + address +
+				'}';
+	}
+
 	public Address getAddress() {
 		return address;
 	}

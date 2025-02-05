@@ -46,6 +46,22 @@ public class DataAccessFacade implements DataAccess {
 		saveToStorage(StorageType.BOOKS, books);
 	}
 
+	public void updateMembersStorage(HashMap<String, LibraryMember> members) {
+		saveToStorage(StorageType.MEMBERS, members);
+	}
+
+	public void updateBook(Book book) {
+		HashMap<String, Book> booksMap = readBooksMap();
+		booksMap.put(book.getIsbn(), book); // Update the book in the map
+		saveToStorage(StorageType.BOOKS, booksMap); // Save the updated map to storage
+	}
+
+	public void updateMember(LibraryMember member) {
+		HashMap<String, LibraryMember> membersMap = readMemberMap();
+		membersMap.put(member.getMemberId(), member); // Update the member in the map
+		saveToStorage(StorageType.MEMBERS, membersMap); // Save the updated map to storage
+	}
+
 	@SuppressWarnings("unchecked")
 	public  HashMap<String,Book> readBooksMap() {
 		//Returns a Map with name/value pairs being
