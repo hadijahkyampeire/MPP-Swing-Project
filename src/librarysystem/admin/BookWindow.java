@@ -1,9 +1,9 @@
-package librarysystem;
+package librarysystem.admin;
 
 import business.Author;
 import business.Book;
 import dataaccess.DataAccessFacade;
-import librarysystem.tables.BooksTablePanel;
+import librarysystem.admin.tables.BooksTablePanel;
 import rulesets.BookRuleSet;
 import rulesets.RuleException;
 
@@ -51,14 +51,14 @@ public class BookWindow extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10, 10, 10, 10);
 
-        // ✅ ISBN Field
+        // ISBN Field
         formPanel.add(new JLabel("ISBN:"), gbc);
         gbc.gridx = 1;
         isbnField = new JTextField(20);
         formPanel.add(isbnField, gbc);
         isbnField.addKeyListener(new InputListener());
 
-        // ✅ Title Field
+        // Title Field
         gbc.gridx = 0;
         gbc.gridy++;
         formPanel.add(new JLabel("Title:"), gbc);
@@ -67,7 +67,7 @@ public class BookWindow extends JFrame {
         formPanel.add(titleField, gbc);
         titleField.addKeyListener(new InputListener());
 
-        // ✅ Borrow Period (Fix the Unwanted "A")
+        // Borrow Period (Fix the Unwanted "A")
         gbc.gridx = 0;
         gbc.gridy++;
         formPanel.add(new JLabel("Borrow Period:"), gbc);
@@ -77,7 +77,7 @@ public class BookWindow extends JFrame {
         formPanel.add(borrowPeriodComboBox, gbc);
         borrowPeriodComboBox.addActionListener(e -> checkSaveButtonState());
 
-        // ✅ Authors List
+        // Authors List
         gbc.gridx = 0;
         gbc.gridy++;
         formPanel.add(new JLabel("Authors:"), gbc);
@@ -88,31 +88,30 @@ public class BookWindow extends JFrame {
         authorScrollPane.setPreferredSize(new Dimension(200, 80));
         formPanel.add(authorScrollPane, gbc);
 
-        // ✅ "+Author" Button (Only One!)
+        // "+Author" Button (Only One!)
         gbc.gridy++;
         addAuthorButton = new JButton("+Author");
         formPanel.add(addAuthorButton, gbc);
 
         addAuthorButton.addActionListener(e -> {
-            // ✅ Apply Blur Effect
+            // Apply Blur Effect
             overlay = new JPanel();
             overlay.setBackground(new Color(0, 0, 0, 50)); // ✅ Semi-transparent gray
             overlay.setBounds(0, 0, getWidth(), getHeight());
             getLayeredPane().add(overlay, JLayeredPane.MODAL_LAYER);
 
-            // ✅ Open Author Modal
+            // Open Author Modal
             new AuthorWindow(BookWindow.this);
         });
 
-        add(formPanel, BorderLayout.CENTER); // ✅ Add Form Panel to Center
+        add(formPanel, BorderLayout.CENTER);
 
-        // ✅ **Save Button (Centered)**
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         saveBookButton = new JButton(isEditMode ? "Update" : "Save Book");
-        saveBookButton.setPreferredSize(new Dimension(150, 40)); // ✅ Bigger Button
-        saveBookButton.setEnabled(false); // Initially disabled
+        saveBookButton.setPreferredSize(new Dimension(150, 40));
+        saveBookButton.setEnabled(false);
         buttonPanel.add(saveBookButton);
-        add(buttonPanel, BorderLayout.SOUTH); // ✅ Add Button Panel to Bottom
+        add(buttonPanel, BorderLayout.SOUTH);
 
         //Prepopulate
         if(isEditMode && book != null) {

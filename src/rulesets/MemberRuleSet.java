@@ -1,6 +1,6 @@
 package rulesets;
 
-import librarysystem.LibraryMemberWindow;
+import librarysystem.admin.LibraryMemberWindow;
 
 import java.awt.Component;
 import java.util.regex.Pattern;

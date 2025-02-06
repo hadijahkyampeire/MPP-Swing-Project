@@ -1,10 +1,8 @@
-package librarysystem.tables;
+package librarysystem.admin.tables;
 
-import business.Author;
 import business.Book;
-import business.BookCopy;
 import dataaccess.DataAccessFacade;
-import librarysystem.BookWindow;
+import librarysystem.admin.BookWindow;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -13,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
@@ -28,8 +27,8 @@ public class BooksTablePanel extends JPanel {
         setLayout(new BorderLayout());
         dataAccess = new DataAccessFacade();
 
-        // ✅ Table Columns
-        String[] bookColumns = {"ISBN", "Title", "Authors", "Copies", "Availability Status", "Max Checkout(days)", "Add New Copy", "Actions", "Details"};
+        // Table Columns
+        String[] bookColumns = {"ISBN", "Title", "Authors", "Total Copies", "Availability Status", "Max Checkout(days)", "Add New Copy", "Actions", "Details"};
         bookTableModel = new DefaultTableModel(bookColumns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -38,8 +37,8 @@ public class BooksTablePanel extends JPanel {
         };
 
         bookTable = new JTable(bookTableModel);
-        bookTable.setRowHeight(35); // ✅ Increase Row Height
-        bookTable.setAutoCreateRowSorter(true); // ✅ Enable Sorting
+        bookTable.setRowHeight(35);
+        bookTable.setAutoCreateRowSorter(true);
         for (int i = 0; i < bookTable.getColumnModel().getColumnCount(); i++) {
             bookTable.getColumnModel().getColumn(i).setHeaderRenderer(new CustomHeaderRenderer());
         }
@@ -64,7 +63,7 @@ public class BooksTablePanel extends JPanel {
             }
         });
 
-        // ✅ Disable Sorting on Actions and Availability Column
+        // Disable Sorting on Actions and Availability Column
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(bookTableModel);
         sorter.setSortable(4, false);
         sorter.setSortable(6, false);
@@ -72,7 +71,7 @@ public class BooksTablePanel extends JPanel {
         sorter.setSortable(8, false);
         bookTable.setRowSorter(sorter);
 
-        // ✅ Set Renderers
+        // Set Renderers
 
         TableColumn availabilityColumn = bookTable.getColumnModel().getColumn(4);
         availabilityColumn.setCellRenderer(new AvailabilityRenderer());
@@ -80,7 +79,7 @@ public class BooksTablePanel extends JPanel {
         TableColumn authorsColumn = bookTable.getColumnModel().getColumn(2);
         authorsColumn.setCellRenderer(new AuthorsRenderer());
 
-        // ✅ Customize "Actions" Column with Three Dots Button
+        // Customize "Actions" Column with Three Dots Button
         TableColumn actionsColumn = bookTable.getColumnModel().getColumn(7);
         actionsColumn.setCellRenderer(new ActionButtonRenderer());
         actionsColumn.setCellEditor(new ActionButtonEditor(new JCheckBox()));
@@ -88,7 +87,7 @@ public class BooksTablePanel extends JPanel {
         bookTable.getColumn("Add New Copy").setCellRenderer(new AddCopyButtonRenderer());
         bookTable.getColumn("Add New Copy").setCellEditor(new AddCopyButtonEditor(new JCheckBox()));
 
-        // ✅ Add Mouse Listener for Click to Expand
+        // Add Mouse Listener for Click to Expand
         bookTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent evt) {
@@ -124,7 +123,7 @@ public class BooksTablePanel extends JPanel {
 
         loadBooksData();
 
-        // ✅ Add Table to ScrollPane
+        // Add Table to ScrollPane
         JScrollPane scrollPane = new JScrollPane(bookTable);
         add(scrollPane, BorderLayout.CENTER);
     }
@@ -136,33 +135,34 @@ public class BooksTablePanel extends JPanel {
         Book book = dataAccess.readBooksMap().get(isbn);
 
         if (book != null) {
-            JPanel detailsPanel = new JPanel(new BorderLayout());
+            // Create Panel for Book Details
+            JPanel detailsPanel = new JPanel();
+            detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
             detailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-            // ✅ Authors Section
-            DefaultListModel<String> authorListModel = new DefaultListModel<>();
-            for (Author author : book.getAuthors()) {
-                authorListModel.addElement(author.getFirstName() + " " + author.getLastName() + " - " + author.getAddress());
-            }
-            JList<String> authorList = new JList<>(authorListModel);
-            System.out.println(book.getAuthors().toString() + "Authors");
-            detailsPanel.add(new JLabel("📚 Authors:"), BorderLayout.NORTH);
-            detailsPanel.add(new JScrollPane(authorList), BorderLayout.CENTER);
+            // General info
+            detailsPanel.add(new JLabel("<html><b>ISBN:</b> " + book.getIsbn() + "</html>"));
+            detailsPanel.add(Box.createVerticalStrut(5));
+            detailsPanel.add(new JLabel("<html><b>Title:</b> " + book.getTitle() + "</html>"));
+            detailsPanel.add(Box.createVerticalStrut(5));
+            detailsPanel.add(new JLabel("<html><b>⏳Max Checkout:</b> " + book.getMaxCheckoutLength() + " days</html>"));
+            detailsPanel.add(Box.createVerticalStrut(5));
+            // Authors
+            String authors = book.getAuthors().stream()
+                    .map(a -> a.getFirstName() + " " + a.getLastName() + " - " + a.getAddress())
+                    .collect(Collectors.joining("<br>"));
+            detailsPanel.add(new JLabel("<html><b>👤 Authors:</b><br>" + (authors.isEmpty() ? "No Authors" : authors) + "</html>"));
+            detailsPanel.add(Box.createVerticalStrut(5));
+            // Book copies
+            String copies = Arrays.stream(book.getCopies())
+                    .map(copy -> "Copy #" + copy.getCopyNum() + " - " + (copy.isAvailable() ? "✅ Available" : "❌ Checked out"))
+                    .collect(Collectors.joining("<br>"));
+            detailsPanel.add(new JLabel("<html><b>📚 Copies:</b><br>" + (copies.isEmpty() ? "No Copies" : copies) + "</html>"));
 
-            // ✅ Copies Section
-            DefaultListModel<String> copiesListModel = new DefaultListModel<>();
-            for (BookCopy copy : book.getCopies()) {
-                String status = copy.isAvailable() ? "✅ Available" : "❌ Unavailable";
-                copiesListModel.addElement("Copy #" + copy.getCopyNum() + " - " + status);
-            }
-            JList<String> copiesList = new JList<>(copiesListModel);
-            detailsPanel.add(new JLabel("📖 Copies:"), BorderLayout.SOUTH);
-            detailsPanel.add(new JScrollPane(copiesList), BorderLayout.SOUTH);
-
-            // ✅ Show in Modal Window
-            JOptionPane.showMessageDialog(this, detailsPanel, "Book Details", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, detailsPanel, "📘 Book Details", JOptionPane.INFORMATION_MESSAGE);
         }
     }
+
 
     public class AddCopyButtonEditor extends DefaultCellEditor {
         private JButton button;
@@ -209,7 +209,7 @@ public class BooksTablePanel extends JPanel {
             return isbn;
         }
     }
-    /** 📌 **Custom Renderer for Actions Column** (Displays Three Dots Button) */
+    /** **Custom Renderer for Actions Column** (Displays Three Dots Button) */
     private class ActionButtonRenderer extends JButton implements TableCellRenderer {
         public ActionButtonRenderer() {
             setText("⋮"); // Three vertical dots
@@ -226,7 +226,7 @@ public class BooksTablePanel extends JPanel {
         }
     }
 
-    /** 📌 **Custom Editor for Actions Column** (Opens Dropdown on Click) */
+    /** **Custom Editor for Actions Column** (Opens Dropdown on Click) */
     private class ActionButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String isbn;
@@ -287,7 +287,7 @@ public class BooksTablePanel extends JPanel {
         }
     }
 
-    /** ✅ Handle Book Actions */
+    /** Handle Book Actions */
     private void editBook(String isbn) {
         Book book = dataAccess.readBooksMap().get(isbn);
         new BookWindow(booksTablePanel, book, true); // Open Edit Window
@@ -307,38 +307,38 @@ public class BooksTablePanel extends JPanel {
 
 
     public JTable getBookTable() {
-        return bookTable; // ✅ Expose table reference for filtering
+
+        return bookTable; // Expose table reference for filtering
     }
 
     public void loadBooksData() {
-        bookTableModel.setRowCount(0); // ✅ Clear old data
+        bookTableModel.setRowCount(0);
 
         HashMap<String, Book> booksMap = dataAccess.readBooksMap();
-        bookTableModel.setRowCount(0); // ✅ Clear existing rows
+        bookTableModel.setRowCount(0);
 
         for (Book book : booksMap.values()) {
             String isbn = book.getIsbn();
             String title = book.getTitle();
-            // ✅ Convert List<Author> to a formatted String
+
+
             String authorsList = book.getAuthors().stream()
                     .map(author -> author.getFirstName() + " " + author.getLastName())
                     .collect(Collectors.joining(", "));
 
-            // ✅ Extract First Author (Before First Comma)
             String displayAuthor = authorsList.contains(",") ? authorsList.substring(0, authorsList.indexOf(",")) + "..." : authorsList;
 
             int maxCheckout = book.getMaxCheckoutLength();
-            int totalCopies = book.getCopyNums().size();  // ✅ Use `getCopyNums()`
-            int availableCopies = book.getAvailableCopies();  // ✅ Available copies count
-            String availabilityStatus = availableCopies + " available, " + (totalCopies - availableCopies) + " unavailable";
+            int totalCopies = book.getCopyNums().size();
+            int availableCopies = book.getAvailableCopies();
+            String availabilityStatus = availableCopies + " Available, " + (totalCopies - availableCopies) + " Checked out";
 
-            // ✅ Add Row to Table
             bookTableModel.addRow(new Object[]{isbn, title, displayAuthor, totalCopies, availabilityStatus, maxCheckout, "", "⋮", "View details"});
         }
     }
 
     public TableRowSorter<TableModel> getSorter() {
-        return sorter; // ✅ Provide reference to sorter
+        return sorter;
     }
 }
 

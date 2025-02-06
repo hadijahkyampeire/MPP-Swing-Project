@@ -1,4 +1,4 @@
-package librarysystem;
+package librarysystem.admin;
 
 import business.Address;
 import business.Author;
@@ -16,14 +16,13 @@ public class AuthorWindow extends JDialog {
     private BookWindow parentWindow;
 
     public AuthorWindow(BookWindow parent) {
-        super(parent, "Add Author", true); // ✅ Modal Dialog
+        super(parent, "Add Author", true);
         this.parentWindow = parent;
 
         setSize(700, 600);
-        setLayout(new BorderLayout()); // ✅ Proper layout
+        setLayout(new BorderLayout());
         setLocationRelativeTo(parent);
 
-        // ✅ Form Panel (Holds Input Fields)
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40)); // ✅ Consistent Padding
         GridBagConstraints gbc = new GridBagConstraints();
@@ -34,7 +33,6 @@ public class AuthorWindow extends JDialog {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.weightx = 1;
 
-        // ✅ Form Fields (Larger Input Fields)
         addFormField("First Name:", firstNameField = createTextField(), gbc, formPanel);
         addFormField("Last Name:", lastNameField = createTextField(), gbc, formPanel);
         addFormField("Phone:", phoneField = createTextField(), gbc, formPanel);
@@ -45,10 +43,8 @@ public class AuthorWindow extends JDialog {
         addFormField("State:", stateField = createTextField(), gbc, formPanel);
         addFormField("Zip:", zipField = createTextField(), gbc, formPanel);
 
-        // ✅ Add Form Panel to Center
         add(formPanel, BorderLayout.CENTER);
 
-        // ✅ **Save Author Button (Bottom-Centered)**
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         saveAuthorButton = new JButton("Save Author");
         saveAuthorButton.setFont(new Font("Arial", Font.BOLD, 14));
@@ -58,12 +54,10 @@ public class AuthorWindow extends JDialog {
         buttonPanel.add(saveAuthorButton);
         add(buttonPanel, BorderLayout.SOUTH); // ✅ Place at Bottom
 
-        // ✅ **Save Author Button Action**
         saveAuthorButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    // ✅ Collect author details
                     String firstName = firstNameField.getText().trim();
                     String lastName = lastNameField.getText().trim();
                     String phone = phoneField.getText().trim();
@@ -76,20 +70,16 @@ public class AuthorWindow extends JDialog {
                             zipField.getText().trim()
                     );
 
-                    // ✅ Create Author object
                     Author author = new Author(firstName, lastName, phone, address, bio, credentials);
 
-                    // ✅ Add author to the parent BookWindow
                     parentWindow.addAuthor(author);
 
-                    // ✅ Remove blur effect from BookWindow
                     if (parentWindow.overlay != null) {
                         parentWindow.getLayeredPane().remove(parentWindow.overlay);
                         parentWindow.overlay = null;
                         parentWindow.repaint();
                     }
 
-                    // ✅ Close this window and return to BookWindow
                     dispose();
                 } catch (IllegalArgumentException ex) {
                     JOptionPane.showMessageDialog(AuthorWindow.this, "Error: " + ex.getMessage(), "Validation Error", JOptionPane.ERROR_MESSAGE);
@@ -97,28 +87,26 @@ public class AuthorWindow extends JDialog {
             }
         });
 
-        setVisible(true); // ✅ Ensure modal is visible
+        setVisible(true);
     }
 
-    // ✅ Utility method to create text fields with a consistent size
     private JTextField createTextField() {
         JTextField textField = new JTextField();
-        textField.setPreferredSize(new Dimension(250, 30)); // ✅ Wider Fields
+        textField.setPreferredSize(new Dimension(250, 30));
         textField.setMinimumSize(new Dimension(250, 30));
         textField.setMaximumSize(new Dimension(250, 30));
         return textField;
     }
 
-    // ✅ Utility method to create a larger text area for Bio
     private JTextArea createTextArea() {
         JTextArea textArea = new JTextArea(3, 20);
-        textArea.setPreferredSize(new Dimension(250, 60)); // ✅ Taller Text Area
+        textArea.setPreferredSize(new Dimension(250, 60));
         textArea.setMinimumSize(new Dimension(250, 60));
         textArea.setMaximumSize(new Dimension(250, 60));
         return textArea;
     }
 
-    // ✅ Utility method to add form fields
+
     private void addFormField(String label, JComponent field, GridBagConstraints gbc, JPanel panel) {
         gbc.gridy++;
         gbc.gridx = 0;

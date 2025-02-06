@@ -1,4 +1,4 @@
-package librarysystem;
+package librarysystem.admin;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;

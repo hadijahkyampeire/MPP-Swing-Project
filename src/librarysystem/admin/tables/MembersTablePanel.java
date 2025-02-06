@@ -1,9 +1,8 @@
-package librarysystem.tables;
+package librarysystem.admin.tables;
 
-import business.Book;
 import business.LibraryMember;
 import dataaccess.DataAccessFacade;
-import librarysystem.LibraryMemberWindow;
+import librarysystem.admin.LibraryMemberWindow;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -23,7 +22,7 @@ public class MembersTablePanel extends JPanel {
         setLayout(new BorderLayout());
         dataAccess = new DataAccessFacade();
 
-        // ✅ Table Columns
+        // Table Columns
         String[] memberColumns = {"Member ID", "Name", "Address", "Phone", "Actions"};
         memberTableModel = new DefaultTableModel(memberColumns, 0);
 
@@ -38,7 +37,6 @@ public class MembersTablePanel extends JPanel {
         memberTable.setAutoCreateRowSorter(true);
         loadMembersData();
 
-        // ✅ Add Table to ScrollPane
         JScrollPane scrollPane = new JScrollPane(memberTable);
         add(scrollPane, BorderLayout.CENTER);
     }
@@ -46,7 +44,7 @@ public class MembersTablePanel extends JPanel {
     /** ✅ Load Members Data into the Table */
     public void loadMembersData() {
         HashMap<String, LibraryMember> membersMap = dataAccess.readMemberMap();
-        memberTableModel.setRowCount(0); // ✅ Clear existing rows
+        memberTableModel.setRowCount(0);
 
         for (LibraryMember member : membersMap.values()) {
             String memberId = member.getMemberId();
@@ -54,7 +52,7 @@ public class MembersTablePanel extends JPanel {
             String address = member.getAddress().getStreet() + ", " + member.getAddress().getCity();
             String phone = member.getTelephone();
 
-            // ✅ Add Row to Table
+            // Add Row to Table
             memberTableModel.addRow(new Object[]{memberId, name, address, phone, "⋮"});
         }
     }
@@ -149,12 +147,13 @@ public class MembersTablePanel extends JPanel {
             HashMap<String, LibraryMember> members = dataAccess.readMemberMap();
             members.remove(memberId);
             dataAccess.updateMembersStorage(members);
-            loadMembersData(); // ✅ Refresh Table
+            loadMembersData(); // Refresh Table
         }
     }
 
     public JTable getMemberTable() {
-        return memberTable; // ✅ Expose table reference for filtering
+
+        return memberTable; // Expose table reference for filtering
     }
 
     public void filterTable(String searchText) {
@@ -164,7 +163,7 @@ public class MembersTablePanel extends JPanel {
         if (searchText.length() == 0) {
             sorter.setRowFilter(null);
         } else {
-            // Create a RowFilter that matches any of the columns (ID, Name, Address, Phone)
+
             RowFilter<DefaultTableModel, Object> rowFilter = RowFilter.regexFilter("(?i)" + searchText, 0, 1, 2, 3);
             sorter.setRowFilter(rowFilter);
         }

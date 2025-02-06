@@ -1,15 +1,14 @@
-package librarysystem;
+package librarysystem.admin;
 
 import business.Address;
 import business.LibraryMember;
 import dataaccess.DataAccessFacade;
-import librarysystem.tables.MembersTablePanel;
+import librarysystem.admin.tables.MembersTablePanel;
 import rulesets.MemberRuleSet;
 import rulesets.RuleException;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

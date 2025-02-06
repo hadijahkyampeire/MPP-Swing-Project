@@ -1,4 +1,4 @@
-package librarysystem.tables;
+package librarysystem.admin.tables;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
