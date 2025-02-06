@@ -1,4 +1,4 @@
-package librarysystem.tables;
+package librarysystem.admin.tables;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -18,7 +18,6 @@ public class DetailsRenderer {
                 setText(null);
             } else {
                 setIcon(null);
-                // Use the original value as text
                 if (value != null) {
                     setText(value.toString());
                 }

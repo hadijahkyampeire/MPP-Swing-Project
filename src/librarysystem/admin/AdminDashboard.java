@@ -1,35 +1,29 @@
-package librarysystem;
+package librarysystem.admin;
 
-import librarysystem.tables.BooksTablePanel;
-import librarysystem.tables.MembersTablePanel;
+import librarysystem.LoginWindow;
+import librarysystem.admin.tables.BooksTablePanel;
+import librarysystem.admin.tables.MembersTablePanel;
 
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Objects;
-import java.util.regex.PatternSyntaxException;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 
 public class AdminDashboard extends JFrame {
     private JPanel contentPanel;
     private JTable bookTable, memberTable;
-    private DefaultTableModel bookTableModel, memberTableModel;
     private JTextField searchBook, searchMemberField;
     private JButton addNewBookButton, addNewMemberButton;
-    private JLabel tableTitle; // ✅ Dynamic Title for Books/Members
+    private JLabel tableTitle;
     private CardLayout cardLayout;
-    private JButton booksButton, membersButton; // ✅ Track active button
-    private JPanel sideNavBar; // ✅ Sidebar Panel
+    private JButton booksButton, membersButton;
+    private JPanel sideNavBar;
     private BooksTablePanel booksTablePanel;
     private MembersTablePanel membersTablePanel;
+    private JButton activeNavButton;
 
     public AdminDashboard() {
         booksTablePanel = new BooksTablePanel();
@@ -41,12 +35,11 @@ public class AdminDashboard extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // 🏷️ **Top Navigation Bar**
         JPanel topNavBar = new JPanel(new BorderLayout());
         topNavBar.setBackground(new Color(0,31,63));
         topNavBar.setPreferredSize(new Dimension(getWidth(), 50));
 
-        JLabel logoLabel = new JLabel("📚 Library Admin", SwingConstants.LEFT);
+        JLabel logoLabel = new JLabel("📚 O's Library", SwingConstants.LEFT);
         logoLabel.setForeground(Color.WHITE);
         logoLabel.setFont(new Font("Arial", Font.BOLD, 16));
         topNavBar.add(logoLabel, BorderLayout.WEST);
@@ -63,7 +56,7 @@ public class AdminDashboard extends JFrame {
         logoutItem.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Logged Out!");
             dispose();
-            EventQueue.invokeLater(() -> LibrarySystem.INSTANCE.setVisible(true)); // ✅ Redirect to login
+            EventQueue.invokeLater(() -> LoginWindow.INSTANCE.setVisible(true));
         });
         accountMenu.add(logoutItem);
         menuBar.add(accountMenu);
@@ -71,14 +64,13 @@ public class AdminDashboard extends JFrame {
 
         add(topNavBar, BorderLayout.NORTH);
 
-        // 📌 **Left Sidebar Navigation (Full-Width Buttons)**
+
         sideNavBar = new JPanel();
         sideNavBar.setLayout(new BoxLayout(sideNavBar, BoxLayout.Y_AXIS));
         sideNavBar.setPreferredSize(new Dimension(140, getHeight()));
         sideNavBar.setBackground(Color.LIGHT_GRAY);
         sideNavBar.setBorder(new EmptyBorder(10, 5, 10, 5));
 
-        // ✅ Create Buttons with Sidebar Width Reference
         membersButton = createMenuButton("👥 Members");
         booksButton = createMenuButton("📖 Books");
 
@@ -89,25 +81,24 @@ public class AdminDashboard extends JFrame {
 
         add(sideNavBar, BorderLayout.WEST);
 
-        // 📌 **Main Content Panel (Switchable via CardLayout)**
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
 
-        // 📚 Books Table Panel
+
         JPanel booksPanel = createBooksPanel();
         contentPanel.add(booksPanel, "Books");
 
-        // 👥 Members Table Panel
+
         JPanel membersPanel = createMembersPanel();
         contentPanel.add(membersPanel, "Members");
 
         add(contentPanel, BorderLayout.CENTER);
 
-        // 📌 **Navigation Actions**
+
         membersButton.addActionListener(e -> switchPanel("Members", membersButton));
         booksButton.addActionListener(e -> switchPanel("Books", booksButton));
 
-        // ✅ Set default active button
+
         switchPanel("Members", membersButton);
 
         setVisible(true);
@@ -121,18 +112,18 @@ public class AdminDashboard extends JFrame {
         button.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
         button.setOpaque(true);
         button.setContentAreaFilled(true);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR)); // ✅ Pointer Cursor on Hover
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // ✅ Stretch Button Across Sidebar Width
+        // Stretch Button Across Sidebar Width
         button.setPreferredSize(new Dimension(sideNavBar.getPreferredSize().width, 40));
         button.setMaximumSize(new Dimension(sideNavBar.getPreferredSize().width, 40));
         button.setMinimumSize(new Dimension(sideNavBar.getPreferredSize().width, 40));
 
-        // ✅ Default Sidebar Button Color (Light Gray)
+        // Default Sidebar Button Color (Light Gray)
         button.setBackground(new Color(230, 230, 230));
         button.setForeground(Color.BLACK);
 
-        // ✅ Hover Effect (Lighter Green)
+        // Hover Effect (Lighter Green)
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -152,44 +143,34 @@ public class AdminDashboard extends JFrame {
         return button;
     }
 
-    /** 📌 **Switch Panel and Highlight Active Menu Button** */
-    private void switchPanel(String panelName, JButton activeButton) {
+    /** **Switch Panel and Highlight Active Menu Button** */
+    private void switchPanel(String panelName, JButton clickedButton) {
         cardLayout.show(contentPanel, panelName);
         tableTitle.setText(panelName.equals("Books") ? "📖 Book List" : "👥 Member List");
 
-        // ✅ Reset all buttons to default color
         booksButton.setBackground(new Color(224, 224, 224));
         membersButton.setBackground(new Color(224, 224, 224));
         booksButton.setForeground(Color.BLACK);
         membersButton.setForeground(Color.BLACK);
 
-        // ✅ Set Active Button Color (Navy Blue)
-        activeButton.setBackground(new Color(0, 31, 63)); // ✅ Navy Blue
-        activeButton.setForeground(Color.WHITE);
+        clickedButton.setBackground(new Color(0, 31, 63)); // Navy Blue
+        clickedButton.setForeground(Color.WHITE);
+        activeNavButton = clickedButton;
 
-        // ✅ Stretch Active Button Across Sidebar Width
-        activeButton.setOpaque(true);
-        activeButton.setBorderPainted(false);
-        activeButton.setFocusPainted(false);
-        activeButton.setContentAreaFilled(true);
-
-        // ✅ Force UI Update to Reflect Changes
         sideNavBar.revalidate();
         sideNavBar.repaint();
     }
 
-    /** 📚 **Creates the Books Table Panel** */
+    /** **Creates the Books Table Panel** */
     private JPanel createBooksPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // 📌 **Title for Table**
         tableTitle = new JLabel("📖 Book List", SwingConstants.CENTER);
         tableTitle.setFont(new Font("Arial", Font.BOLD, 18));
         tableTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         panel.add(tableTitle, BorderLayout.NORTH);
 
-        // 🔍 **Search & Add Book Panel**
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
@@ -206,17 +187,14 @@ public class AdminDashboard extends JFrame {
         ));
 
 
-        // ✅ Add Components to Search Panel
         searchPanel.add(titleLabel);
         searchPanel.add(searchBook);
 
-        // ✅ Add New Book Button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         addNewBookButton = createActionButton("➕ Add New Book");
         addNewBookButton.addActionListener(e -> new BookWindow(booksTablePanel, null, false)); // ✅ Pass Reference
         buttonPanel.add(addNewBookButton);
 
-        // ✅ Add Panels to Top Section
         topPanel.add(searchPanel, BorderLayout.WEST);
         topPanel.add(buttonPanel, BorderLayout.EAST);
 
@@ -227,7 +205,6 @@ public class AdminDashboard extends JFrame {
 
         panel.add(topContainer, BorderLayout.NORTH);
 
-        // 📖 **Books Table**
         booksTablePanel = new BooksTablePanel(); // ✅ Initialize Here
         JTable bookTable = booksTablePanel.getBookTable();
         bookTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -253,17 +230,15 @@ public class AdminDashboard extends JFrame {
         return panel;
     }
 
-
-    /** 👥 **Creates the Members Table Panel** */
+    /** **Creates the Members Table Panel** */
     private JPanel createMembersPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        // 📌 **Title for Table**
+
         tableTitle = new JLabel("👥 Member List", SwingConstants.CENTER);
         tableTitle.setFont(new Font("Arial", Font.BOLD, 18));
         tableTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        // 🔍 Search & Add Member Panel (Above Table)
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -289,7 +264,6 @@ public class AdminDashboard extends JFrame {
         JPanel topContainer = new JPanel();
         topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
 
-        // 2) Title goes first
         topContainer.add(tableTitle);
 
         JPanel searchAddRow = new JPanel(new BorderLayout());
@@ -308,7 +282,7 @@ public class AdminDashboard extends JFrame {
         topContainer.add(searchAddRow);
         panel.add(topContainer, BorderLayout.NORTH);
 
-        // 👥 Members Table
+        // Members Table
         membersTablePanel = new MembersTablePanel();
         JTable memberTable = membersTablePanel.getMemberTable();
         memberTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -337,27 +311,29 @@ public class AdminDashboard extends JFrame {
     private JButton createActionButton(String text) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 12));
-        button.setPreferredSize(new Dimension(160, 35)); // ✅ Fixed Compact Size
-        button.setBackground(new Color(0, 31, 63)); // ✅ Navy Blue (Matches Top Nav)
+        button.setPreferredSize(new Dimension(160, 35));
+        button.setBackground(new Color(0, 31, 63));
         button.setForeground(Color.WHITE);
         button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // ✅ Force Background Color to Apply
         button.setOpaque(true);
         button.setContentAreaFilled(true);
-        button.setBorderPainted(false); // Removes default border effect
+        button.setBorderPainted(false);
 
-        // ✅ Hover Effect (Light Blue)
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                button.setBackground(new Color(0, 64, 128)); // ✅ Lighter Blue on Hover
+                if (button != activeNavButton) {
+                    button.setBackground(new Color(180, 220, 255));
+                }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                button.setBackground(new Color(0, 31, 63)); // ✅ Reset to Navy Blue
+                if (button != activeNavButton) {
+                    button.setBackground(new Color(180, 220, 255));
+                }
             }
         });
 

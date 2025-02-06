@@ -1,7 +1,7 @@
 package rulesets;
 
 import business.Author;
-import librarysystem.BookWindow;
+import librarysystem.admin.BookWindow;
 
 import java.awt.Component;
 import java.util.List;

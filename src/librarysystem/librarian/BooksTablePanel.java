@@ -3,9 +3,8 @@ package librarysystem.librarian;
 import business.Book;
 import business.LibraryMember;
 import dataaccess.DataAccessFacade;
-import librarysystem.BookWindow;
-import librarysystem.tables.AuthorsRenderer;
-import librarysystem.tables.AvailabilityRenderer;
+import librarysystem.admin.tables.AuthorsRenderer;
+import librarysystem.admin.tables.AvailabilityRenderer;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -33,8 +32,10 @@ public class BooksTablePanel extends JPanel {
         };
 
         bookTable = new JTable(bookTableModel);
-        bookTable.setRowHeight(35); // Increase Row Height
-        bookTable.setAutoCreateRowSorter(true); // Enable Sorting
+        JTableHeader header = bookTable.getTableHeader();
+        header.setPreferredSize(new Dimension(header.getPreferredSize().width, 40));
+        bookTable.setRowHeight(35);
+        bookTable.setAutoCreateRowSorter(true);
 
         // Disable Sorting on Actions and Availability Column
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(bookTableModel);
@@ -56,9 +57,26 @@ public class BooksTablePanel extends JPanel {
 
         loadBooksData();
 
+        int rowHeight = bookTable.getRowHeight();
+        int rowCount = bookTableModel.getRowCount();
+        int tableHeight = (rowCount > 0) ? (rowCount * rowHeight) + header.getPreferredSize().height + 10 : 100;
+
         // Add Table to ScrollPane
         JScrollPane scrollPane = new JScrollPane(bookTable);
-        add(scrollPane, BorderLayout.CENTER);
+        scrollPane.setPreferredSize(new Dimension(scrollPane.getPreferredSize().width, tableHeight));
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 128), 2));
+        scrollPane.setViewportBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        scrollPane.setViewportBorder(null);
+        scrollPane.revalidate();
+        scrollPane.repaint();
+
+        // Add the table to a panel with padding
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tablePanel.add(scrollPane, BorderLayout.CENTER);
+
+
+        add(tablePanel, BorderLayout.CENTER);
     }
 
     /** Load Books Data into the Table */
@@ -81,9 +99,6 @@ public class BooksTablePanel extends JPanel {
             int maxCheckout = book.getMaxCheckoutLength();
             int totalCopies = book.getCopyNums().size();
             int availableCopies = book.getAvailableCopies();  // Available copies count
-            System.out.println("avaiable copies" + availableCopies);
-            System.out.println("total copies" + totalCopies);
-            System.out.println(Arrays.toString(book.getCopies()) + " copies");
             String availabilityStatus = availableCopies + " available, " + (totalCopies - availableCopies) + " unavailable";
 
             // Add Row to Table with Checkout Button (Enabled/Disabled Based on Availability)
@@ -100,7 +115,7 @@ public class BooksTablePanel extends JPanel {
         }
     }
 
-    /** 📌 **Custom Renderer for Actions Column** (Displays Checkout Button) */
+    /** **Custom Renderer for Actions Column** (Displays Checkout Button) */
     private static class CheckoutButtonRenderer extends JButton implements TableCellRenderer {
         public CheckoutButtonRenderer() {
             setText("Checkout");
@@ -127,7 +142,7 @@ public class BooksTablePanel extends JPanel {
     }
 
 
-    /** 📌 **Custom Editor for Actions Column** (Handles Checkout Button Click) */
+    /** **Custom Editor for Actions Column** (Handles Checkout Button Click) */
     private class CheckoutButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String isbn;
@@ -220,5 +235,13 @@ public class BooksTablePanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Checkout failed. Try again.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    public DefaultTableModel getBookTableModel() {
+        return bookTableModel;
+    }
+
+    public JTable getBookTable() {
+        return bookTable;
     }
 }
