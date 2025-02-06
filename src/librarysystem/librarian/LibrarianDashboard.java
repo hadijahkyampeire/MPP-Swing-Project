@@ -7,9 +7,7 @@ import librarysystem.LoginWindow;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableRowSorter;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -242,7 +240,7 @@ public class LibrarianDashboard extends JFrame {
 
         for (LibraryMember member : members.values()) {
             List<CheckoutEntry> borrowedBooks = Optional.ofNullable(member.getCheckoutEntries()).orElse(Collections.emptyList());
-
+            System.out.println(borrowedBooks+ "BB");
             for (CheckoutEntry entry : borrowedBooks) {
                 if (entry.getDueDate().isAfter(LocalDate.now())) { // Ensure it's still borrowed
                     String title = entry.getBookCopy().getBook().getTitle();
@@ -394,7 +392,8 @@ public class LibrarianDashboard extends JFrame {
                     member.getLastName(),
                     member.getAddress(),
                     member.getTelephone(),
-                    checkoutCount
+                    checkoutCount,
+                    checkoutCount > 0 ? "🖨️" : ""
             });
         }
     }
@@ -451,6 +450,7 @@ public class LibrarianDashboard extends JFrame {
 
         searchPanel.add(new JLabel("Search:"));
         searchPanel.add(searchField);
+
         // Combine search and title
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
@@ -459,17 +459,21 @@ public class LibrarianDashboard extends JFrame {
 
         panel.add(topPanel, BorderLayout.NORTH);
 
-        String[] memberColumns = {"Member ID", "First Name", "Last Name", "Address", "Phone Number", "No. of Checkouts"};
+        String[] memberColumns = {"Member ID", "First Name", "Last Name", "Address", "Phone Number", "No. of Checkouts", "Print Record"};
         memberTableModel = new DefaultTableModel(memberColumns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Prevents any cell from being edited
+                return column == 6;
             }
         };
         memberTable = new JTable(memberTableModel);
         JTableHeader header = memberTable.getTableHeader();
         header.setPreferredSize(new Dimension(header.getPreferredSize().width, 40));
         memberTable.setRowHeight(35);
+
+        TableColumn printColumn = memberTable.getColumnModel().getColumn(6); // Last column
+        printColumn.setCellRenderer(new PrintIconRenderer());
+        printColumn.setCellEditor(new PrintIconEditor(new JCheckBox()));
 
         // Fetch members from storage and load them into the table
         DataAccessFacade dataAccess = new DataAccessFacade();
@@ -481,69 +485,6 @@ public class LibrarianDashboard extends JFrame {
             public void keyReleased(KeyEvent e) {
                 String searchText = searchField.getText().trim();
                 filterTable(searchText, memberTableModel, memberTable);
-            }
-        });
-
-        JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem printItem = new JMenuItem("Print Details");
-
-        printItem.addActionListener(e -> {
-            int selectedRow = memberTable.getSelectedRow();
-            if (selectedRow != -1) { // Ensure a row is selected
-                String memberId = (String) memberTableModel.getValueAt(selectedRow, 0);
-
-                // Retrieve LibraryMember object
-                LibraryMember member = members.get(memberId);
-                if (member == null) {
-                    System.out.println("❌ Member not found!");
-                    return;
-                }
-
-                // Retrieve checkout records
-                List<CheckoutEntry> checkoutEntries = member.getCheckoutEntries();
-
-                // Print Member Details
-                System.out.println("📌 Member Details:");
-                System.out.println("ID: " + member.getMemberId());
-                System.out.println("Name: " + member.getFirstName() + " " + member.getLastName());
-                System.out.println("Address: " + member.getAddress().toString());
-                System.out.println("Phone: " + member.getTelephone());
-                System.out.println("No. of Checkouts: " + checkoutEntries.size());
-
-                // Print Checkout Entries
-                System.out.println("📚 Checkout Entries:");
-                if (checkoutEntries.isEmpty()) {
-                    System.out.println("   No checkouts found.");
-                } else {
-                    for (CheckoutEntry entry : checkoutEntries) {
-                        System.out.println("   - Book: " + entry.getBookCopy().getBook().getTitle() +
-                                " | Due Date: " + entry.getDueDate());
-                    }
-                }
-            }
-        });
-
-        popupMenu.add(printItem);
-
-        memberTable.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                showPopup(e);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                showPopup(e);
-            }
-
-            private void showPopup(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    int row = memberTable.rowAtPoint(e.getPoint());
-                    if (row != -1) {
-                        memberTable.setRowSelectionInterval(row, row);
-                        popupMenu.show(e.getComponent(), e.getX(), e.getY());
-                    }
-                }
             }
         });
 
@@ -560,6 +501,124 @@ public class LibrarianDashboard extends JFrame {
         panel.add(tablePanel, BorderLayout.CENTER);
         return panel;
     }
+
+    private void printMemberDetails(String memberId) {
+        // Retrieve LibraryMember object
+        DataAccessFacade dataAccess = new DataAccessFacade();
+        LibraryMember member = dataAccess.getMemberById(memberId);
+
+        if (member == null) {
+            JOptionPane.showMessageDialog(null, "❌ Member not found!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Retrieve checkout records
+        List<CheckoutEntry> checkoutEntries = member.getCheckoutEntries();
+
+        // Create panel for displaying details
+        JPanel detailsPanel = new JPanel();
+        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+        detailsPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15)); // Padding for the panel
+
+        // **Member Info Section**
+        detailsPanel.add(new JLabel("<html><b>Member ID:</b> " + member.getMemberId() + "</html>"));
+        detailsPanel.add(Box.createVerticalStrut(10)); // Add spacing
+        detailsPanel.add(new JLabel("<html><b>Name:</b> " + member.getFirstName() + " " + member.getLastName() + "</html>"));
+        detailsPanel.add(Box.createVerticalStrut(10));
+        detailsPanel.add(new JLabel("<html><b>Address:</b> " + member.getAddress().toString() + "</html>"));
+        detailsPanel.add(Box.createVerticalStrut(10));
+        detailsPanel.add(new JLabel("<html><b>Phone:</b> " + member.getTelephone() + "</html>"));
+        detailsPanel.add(Box.createVerticalStrut(10));
+        detailsPanel.add(new JLabel("<html><b>No. of Checkouts:</b> " + checkoutEntries.size() + "</html>"));
+        detailsPanel.add(Box.createVerticalStrut(15));
+
+        if (checkoutEntries.isEmpty()) {
+            detailsPanel.add(new JLabel("<html><b>Checkout Entries:</b> No checkouts found.</html>"));
+        } else {
+            detailsPanel.add(new JLabel("<html><b>📚 Checkout Entries:</b></html>"));
+            detailsPanel.add(Box.createVerticalStrut(5));
+
+            for (int i = 0; i < checkoutEntries.size(); i++) {
+                CheckoutEntry entry = checkoutEntries.get(i);
+
+                // **Panel for Individual Entry**
+                JPanel entryPanel = new JPanel();
+                entryPanel.setLayout(new BoxLayout(entryPanel, BoxLayout.Y_AXIS));
+                entryPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+                // **Checkout Date as Title**
+                entryPanel.add(new JLabel("<html><p style='white-space: nowrap;'><b>📅 Checkout Date:</b> " + entry.getCheckoutDate() + "</p></html>"));
+                entryPanel.add(Box.createVerticalStrut(5));
+
+                // **Other Details**
+                entryPanel.add(new JLabel("<html><p style='white-space: nowrap;'><b>Title:</b> " + entry.getBookCopy().getBook().getTitle() + "</p></html>"));
+                entryPanel.add(new JLabel("<html><p style='white-space: nowrap;'><b>ISBN:</b> " + entry.getBookCopy().getBook().getIsbn() + "</p></html>"));
+                entryPanel.add(new JLabel("<html><p style='white-space: nowrap;'><b>Copy Number:</b> " + entry.getBookCopy().getCopyNum() + "</p></html>"));
+                entryPanel.add(new JLabel("<html><p style='white-space: nowrap;'><b>Due Date:</b> " + entry.getDueDate() + "</p></html>"));
+
+                // **Add entry panel to main details panel**
+                detailsPanel.add(entryPanel);
+
+                // **Add a separator after every entry except the last one**
+                if (i < checkoutEntries.size() - 1) {
+                    JSeparator separator = new JSeparator();
+                    separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1)); // Stretch across width
+                    detailsPanel.add(separator);
+                    detailsPanel.add(Box.createVerticalStrut(10)); // Space after separator
+                }
+            }
+        }
+
+        JScrollPane scrollPane = new JScrollPane(detailsPanel);
+        scrollPane.setPreferredSize(new Dimension(800, 400));
+        // Show details in dialog
+        JOptionPane.showMessageDialog(null, detailsPanel, "📄 Member Details", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private class PrintIconEditor extends DefaultCellEditor {
+        private final JButton button;
+        private String memberId;
+
+        public PrintIconEditor(JCheckBox checkBox) {
+            super(checkBox);
+            button = new JButton(new PrintIcon());
+            button.setBorderPainted(false);
+            button.setContentAreaFilled(false);
+            button.setFocusPainted(false);
+            button.addActionListener(e -> printMemberDetails(memberId));
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            memberId = (String) table.getValueAt(row, 0);
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return null;
+        }
+    }
+
+    private class PrintIconRenderer extends DefaultTableCellRenderer {
+        private final Icon printIcon = new PrintIcon();
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel label = new JLabel();
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+
+            int checkouts = (int) table.getValueAt(row, 5);
+
+            if (checkouts > 0) {
+                label.setIcon(printIcon);
+                label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+
+            return label;
+        }
+    }
+
 
     public void filterTable(String searchText, DefaultTableModel model, JTable table) {
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
