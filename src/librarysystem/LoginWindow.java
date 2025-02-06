@@ -4,6 +4,7 @@ import dataaccess.DataAccessFacade;
 import dataaccess.User;
 import librarysystem.admin.AdminDashboard;
 import librarysystem.librarian.LibrarianDashboard;
+import librarysystem.SuperAdmin.SuperAdminDashboard;
 
 import java.awt.*;
 import javax.swing.*;
@@ -192,7 +193,7 @@ public class LoginWindow extends JFrame implements LibWindow {
 						AdminDashboard.open();
 						break;
 					case BOTH:
-						ManagerDashboard.open();
+						SuperAdminDashboard.open();
 						break;
 				}
 

@@ -76,7 +76,7 @@ public class AdminDashboard extends JFrame {
 
 
         sideNavBar.add(membersButton);
-        sideNavBar.add(Box.createRigidArea(new Dimension(0, 5))); // ✅ Small spacing
+        sideNavBar.add(Box.createRigidArea(new Dimension(0, 5)));
         sideNavBar.add(booksButton);
 
         add(sideNavBar, BorderLayout.WEST);
@@ -192,7 +192,7 @@ public class AdminDashboard extends JFrame {
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         addNewBookButton = createActionButton("➕ Add New Book");
-        addNewBookButton.addActionListener(e -> new BookWindow(booksTablePanel, null, false)); // ✅ Pass Reference
+        addNewBookButton.addActionListener(e -> new BookWindow(booksTablePanel, null, false));
         buttonPanel.add(addNewBookButton);
 
         topPanel.add(searchPanel, BorderLayout.WEST);
@@ -205,7 +205,7 @@ public class AdminDashboard extends JFrame {
 
         panel.add(topContainer, BorderLayout.NORTH);
 
-        booksTablePanel = new BooksTablePanel(); // ✅ Initialize Here
+        booksTablePanel = new BooksTablePanel();
         JTable bookTable = booksTablePanel.getBookTable();
         bookTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 

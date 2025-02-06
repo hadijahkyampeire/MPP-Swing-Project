@@ -1,4 +1,4 @@
-package librarysystem.librarian;
+package librarysystem.SuperAdmin;
 
 import business.CheckoutEntry;
 import business.LibraryMember;
@@ -18,19 +18,28 @@ import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.List;
+import java.util.Optional;
 
-public class LibrarianDashboard extends JFrame {
-    private JPanel contentPanel, sideNavBar;
+public class SuperAdminDashboard extends JFrame {
+    private JPanel contentPanel;
     private CardLayout cardLayout;
-    private JButton booksButton, membersButton, overDueBooksButton, checkedOutBooksButton;
-    private JTable borrowedBooksTable, memberTable;
+    private JButton booksButton, membersButton, overDueBooksButton, checkedOutBooksButton, addNewBookButton, addNewMemberButton, activeNavButton;
+    private JTable borrowedBooksTable, memberTable, bookTable;
+    private JPanel sideNavBar;
     private DefaultTableModel memberTableModel;
-    private JButton activeNavButton;
+    private JTextField searchBook, searchMemberField;
+    private JLabel tableTitle;
+    private BooksTablePanel booksTablePanel;;
+    private MembersTablePanel membersTablePanel;
 
-    public LibrarianDashboard() {
-        setTitle("Librarian Dashboard");
+    public SuperAdminDashboard() {
+        booksTablePanel = new BooksTablePanel();
+        bookTable = booksTablePanel.getBookTable();
+        membersTablePanel = new MembersTablePanel();
+        memberTable = membersTablePanel.getMemberTable();
+
+        setTitle("Admin/Librarian Dashboard");
         setSize(1100, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -62,12 +71,12 @@ public class LibrarianDashboard extends JFrame {
         logoLabel.setForeground(Color.WHITE);
         logoLabel.setFont(new Font("Arial", Font.BOLD, 16));
 
-        JLabel welcomeLabel = new JLabel("Welcome, Librarian", SwingConstants.CENTER);
+        JLabel welcomeLabel = new JLabel("Welcome, Admin/Librarian", SwingConstants.CENTER);
         welcomeLabel.setForeground(Color.WHITE);
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 14));
 
         JMenuBar menuBar = new JMenuBar();
-        JMenu accountMenu = new JMenu("👤 Librarian");
+        JMenu accountMenu = new JMenu("👤 Admin/Librarian");
         JMenuItem logoutItem = new JMenuItem("Logout");
         logoutItem.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Logged Out!");
@@ -344,59 +353,100 @@ public class LibrarianDashboard extends JFrame {
     /** **Creates the Books Panel with book data** */
     private JPanel createBooksPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel tableTitle = new JLabel("📖 All Books List", SwingConstants.CENTER);
+        tableTitle = new JLabel("📖 Book List", SwingConstants.CENTER);
         tableTitle.setFont(new Font("Arial", Font.BOLD, 18));
         tableTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        panel.add(tableTitle, BorderLayout.NORTH);
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        JTextField searchField = new JTextField(20);
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.GRAY, 1, true),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        ));
-        searchField.setPreferredSize(new Dimension(searchField.getPreferredSize().width, 30));
-
-        searchPanel.add(new JLabel("Search:"));
-        searchPanel.add(searchField);
-
-        // Combine search and title
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        topPanel.add(tableTitle, BorderLayout.NORTH);
-        topPanel.add(searchPanel, BorderLayout.SOUTH);
+        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-        panel.add(topPanel, BorderLayout.NORTH);
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        BooksTablePanel booksPanel = new BooksTablePanel();
-        panel.add(booksPanel, BorderLayout.CENTER);
+        JLabel titleLabel = new JLabel("Search by ISBN or Title:");
+        searchBook = new JTextField(20);
+        searchBook.setFont(new Font("Arial", Font.PLAIN, 14));
+        searchBook.setPreferredSize(new Dimension(searchBook.getPreferredSize().width, 30)); // Increase height of the search bar
+        searchBook.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GRAY, 1, true),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5) // Add padding inside the search field
+        ));
 
-        searchField.addKeyListener(new KeyAdapter() {
+
+        searchPanel.add(titleLabel);
+        searchPanel.add(searchBook);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        addNewBookButton = createActionButton("➕ Add New Book");
+        addNewBookButton.addActionListener(e -> new BookWindow(booksTablePanel, null, false));
+        buttonPanel.add(addNewBookButton);
+
+        topPanel.add(searchPanel, BorderLayout.WEST);
+        topPanel.add(buttonPanel, BorderLayout.EAST);
+
+        JPanel topContainer = new JPanel();
+        topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
+        topContainer.add(tableTitle);
+        topContainer.add(topPanel);
+
+        panel.add(topContainer, BorderLayout.NORTH);
+
+        bookTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        JScrollPane scrollPane = new JScrollPane(booksTablePanel.getBookTable());
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 128), 2)); // Navy blue border
+        scrollPane.setViewportBorder(null);
+
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding around the table
+        tablePanel.add(scrollPane, BorderLayout.CENTER);
+
+        panel.add(tablePanel, BorderLayout.CENTER);
+
+        searchBook.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                String searchText = searchField.getText().trim();
-                filterTable(searchText, booksPanel.getBookTableModel(), booksPanel.getBookTable());
+                String searchText = searchBook.getText().trim();
+                booksTablePanel.filterTable(searchText);
             }
         });
+
         return panel;
     }
 
-    private void loadMembers(DefaultTableModel tableModel, HashMap<String, LibraryMember> members) {
-        tableModel.setRowCount(0); // Clear existing data
+    private JButton createActionButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setPreferredSize(new Dimension(160, 35));
+        button.setBackground(new Color(0, 31, 63));
+        button.setForeground(Color.WHITE);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        for (LibraryMember member : members.values()) {
-            int checkoutCount = (member.getCheckoutEntries() != null) ? member.getCheckoutEntries().size() : 0;
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false);
 
-            tableModel.addRow(new Object[]{
-                    member.getMemberId(),
-                    member.getFirstName(),
-                    member.getLastName(),
-                    member.getAddress(),
-                    member.getTelephone(),
-                    checkoutCount
-            });
-        }
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (button != activeNavButton) {
+                    button.setBackground(new Color(180, 220, 255));
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (button != activeNavButton) {
+                    button.setBackground(new Color(180, 220, 255));
+                }
+            }
+        });
+
+        return button;
     }
 
     private void loadOverdueBooks(DefaultTableModel tableModel, HashMap<String, LibraryMember> members) {
@@ -407,7 +457,7 @@ public class LibrarianDashboard extends JFrame {
         members.values().stream()
                 .map(member -> Optional.ofNullable(member.getCheckoutEntries()) // Wrap checkout entries in Optional
                         .orElseGet(Collections::emptyList)) // Provide an empty list if null
-                .flatMap(List::stream)
+                .flatMap(java.util.List::stream)
                 .filter(entry -> Optional.ofNullable(entry.getBookCopy()) // Ensure bookCopy is not null
                         .map(copy -> !copy.isAvailable() && entry.getDueDate().isBefore(today)) // Check availability and due date
                         .orElse(false)) // Default to false if bookCopy is null
@@ -437,127 +487,74 @@ public class LibrarianDashboard extends JFrame {
     private JPanel createMembersPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        JLabel tableTitle = new JLabel("👥 Member List", SwingConstants.CENTER);
+        tableTitle = new JLabel("👥 Member List", SwingConstants.CENTER);
         tableTitle.setFont(new Font("Arial", Font.BOLD, 18));
-        tableTitle.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        tableTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JTextField searchField = new JTextField(20);
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.GRAY, 1, true),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        ));
-        searchField.setPreferredSize(new Dimension(searchField.getPreferredSize().width, 30));
-
-        searchPanel.add(new JLabel("Search:"));
-        searchPanel.add(searchField);
-        // Combine search and title
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        topPanel.add(tableTitle, BorderLayout.NORTH);
-        topPanel.add(searchPanel, BorderLayout.SOUTH);
+        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        panel.add(topPanel, BorderLayout.NORTH);
+        JLabel searchLabel = new JLabel("Search by Name, ID, Address:");
+        searchMemberField = new JTextField(20);
+        searchMemberField.setPreferredSize(new Dimension(searchMemberField.getPreferredSize().width, 30));
+        searchMemberField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GRAY, 1, true),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5) // Add padding inside the search field
+        ));
 
-        String[] memberColumns = {"Member ID", "First Name", "Last Name", "Address", "Phone Number", "No. of Checkouts"};
-        memberTableModel = new DefaultTableModel(memberColumns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Prevents any cell from being edited
-            }
-        };
-        memberTable = new JTable(memberTableModel);
-        JTableHeader header = memberTable.getTableHeader();
-        header.setPreferredSize(new Dimension(header.getPreferredSize().width, 40));
-        memberTable.setRowHeight(35);
+        searchPanel.add(new JLabel("Search by Name, ID, Address:"));
+        searchPanel.add(searchMemberField);
 
-        // Fetch members from storage and load them into the table
-        DataAccessFacade dataAccess = new DataAccessFacade();
-        HashMap<String, LibraryMember> members = dataAccess.readMemberMap();
-        loadMembers(memberTableModel, members);
 
-        searchField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                String searchText = searchField.getText().trim();
-                filterTable(searchText, memberTableModel, memberTable);
-            }
-        });
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        addNewMemberButton = createActionButton("➕ Add New Member");
+        addNewMemberButton.addActionListener(e -> new LibraryMemberWindow(membersTablePanel, null, false));
+        buttonPanel.add(addNewMemberButton);
 
-        JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem printItem = new JMenuItem("Print Details");
+        JPanel topContainer = new JPanel();
+        topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
 
-        printItem.addActionListener(e -> {
-            int selectedRow = memberTable.getSelectedRow();
-            if (selectedRow != -1) { // Ensure a row is selected
-                String memberId = (String) memberTableModel.getValueAt(selectedRow, 0);
+        topContainer.add(tableTitle);
 
-                // Retrieve LibraryMember object
-                LibraryMember member = members.get(memberId);
-                if (member == null) {
-                    System.out.println("❌ Member not found!");
-                    return;
-                }
+        JPanel searchAddRow = new JPanel(new BorderLayout());
+        // Left side: search label + text field
+        JPanel leftSearchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        leftSearchPanel.add(searchLabel);
+        leftSearchPanel.add(searchMemberField);
 
-                // Retrieve checkout records
-                List<CheckoutEntry> checkoutEntries = member.getCheckoutEntries();
+        // Right side: add button
+        JPanel rightButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        rightButtonPanel.add(addNewMemberButton);
 
-                // Print Member Details
-                System.out.println("📌 Member Details:");
-                System.out.println("ID: " + member.getMemberId());
-                System.out.println("Name: " + member.getFirstName() + " " + member.getLastName());
-                System.out.println("Address: " + member.getAddress().toString());
-                System.out.println("Phone: " + member.getTelephone());
-                System.out.println("No. of Checkouts: " + checkoutEntries.size());
+        searchAddRow.add(leftSearchPanel, BorderLayout.WEST);
+        searchAddRow.add(rightButtonPanel, BorderLayout.EAST);
 
-                // Print Checkout Entries
-                System.out.println("📚 Checkout Entries:");
-                if (checkoutEntries.isEmpty()) {
-                    System.out.println("   No checkouts found.");
-                } else {
-                    for (CheckoutEntry entry : checkoutEntries) {
-                        System.out.println("   - Book: " + entry.getBookCopy().getBook().getTitle() +
-                                " | Due Date: " + entry.getDueDate());
-                    }
-                }
-            }
-        });
+        topContainer.add(searchAddRow);
+        panel.add(topContainer, BorderLayout.NORTH);
 
-        popupMenu.add(printItem);
+        // Members Table
+        memberTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
-        memberTable.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                showPopup(e);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                showPopup(e);
-            }
-
-            private void showPopup(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    int row = memberTable.rowAtPoint(e.getPoint());
-                    if (row != -1) {
-                        memberTable.setRowSelectionInterval(row, row);
-                        popupMenu.show(e.getComponent(), e.getX(), e.getY());
-                    }
-                }
-            }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(memberTable);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 128), 2));
-        scrollPane.setViewportBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JScrollPane scrollPane = new JScrollPane(membersTablePanel.getMemberTable());
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 128), 2)); // Navy blue border
         scrollPane.setViewportBorder(null);
 
-        // Add the table to a panel with padding
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         tablePanel.add(scrollPane, BorderLayout.CENTER);
 
         panel.add(tablePanel, BorderLayout.CENTER);
+
+        searchMemberField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String searchText = searchMemberField.getText().trim();
+                membersTablePanel.filterTable(searchText);
+            }
+        });
+
         return panel;
     }
 
@@ -575,10 +572,11 @@ public class LibrarianDashboard extends JFrame {
     }
 
     public static void open() {
-        SwingUtilities.invokeLater(LibrarianDashboard::new);
+        SwingUtilities.invokeLater(SuperAdminDashboard::new);
     }
 
     public static void main(String[] args) {
-        new LibrarianDashboard();
+        new SuperAdminDashboard();
     }
 }
+

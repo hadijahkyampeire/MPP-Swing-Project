@@ -3,15 +3,13 @@ package librarysystem.librarian;
 import business.Book;
 import business.LibraryMember;
 import dataaccess.DataAccessFacade;
-import librarysystem.admin.tables.AuthorsRenderer;
-import librarysystem.admin.tables.AvailabilityRenderer;
-
-import javax.swing.*;
-import javax.swing.table.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.stream.Collectors;
+import javax.swing.*;
+import javax.swing.table.*;
+import librarysystem.admin.tables.AuthorsRenderer;
+import librarysystem.admin.tables.AvailabilityRenderer;
 
 public class BooksTablePanel extends JPanel {
     private JTable bookTable;
@@ -82,7 +80,6 @@ public class BooksTablePanel extends JPanel {
     /** Load Books Data into the Table */
     private void loadBooksData() {
         HashMap<String, Book> booksMap = dataAccess.readBooksMap();
-        System.out.println(booksMap.values());
         bookTableModel.setRowCount(0); // Clear existing rows
 
         for (Book book : booksMap.values()) {
