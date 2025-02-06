@@ -1,17 +1,20 @@
 package dataaccess;
+
 import java.io.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 
-import business.Book;
-import business.LibraryMember;
+import business.*;
+
+import javax.swing.table.DefaultTableModel;
 
 
 public class DataAccessFacade implements DataAccess {
-	
+
 	enum StorageType {
 		BOOKS, MEMBERS, USERS;
 	}
@@ -41,6 +44,12 @@ public class DataAccessFacade implements DataAccess {
 		}
 	}
 
+	public void updateBookCopies(Book book) {
+		HashMap<String, Book> books = readBooksMap();
+		String isbn = book.getIsbn();
+		books.put(isbn, book);
+		saveToStorage(StorageType.BOOKS, books);
+	}
 
 	public void updateBooksStorage(HashMap<String, Book> books) {
 		saveToStorage(StorageType.BOOKS, books);
@@ -59,11 +68,43 @@ public class DataAccessFacade implements DataAccess {
 	public void updateMember(LibraryMember member) {
 		HashMap<String, LibraryMember> membersMap = readMemberMap();
 		membersMap.put(member.getMemberId(), member); // Update the member in the map
-		saveToStorage(StorageType.MEMBERS, membersMap); // Save the updated map to storage
+		saveToStorage(StorageType.MEMBERS, membersMap); 
+	}// Save the updated map to storage
+	public boolean memberExists(String memberId) {
+		HashMap<String, LibraryMember> members = readMemberMap();
+		return members.containsKey(memberId);
+	}
+
+	public Book getBookByISBN(String isbn) {
+		HashMap<String, Book> books = readBooksMap();
+		return books.getOrDefault(isbn, null);
+	}
+
+	public LibraryMember getMemberById(String memberId) {
+		HashMap<String, LibraryMember> members = readMemberMap();
+		return members.get(memberId); // Returns the member or null if not found
+	}
+
+	public boolean checkoutBook(LibraryMember member, Book book) {
+		BookCopy availableCopy = book.getNextAvailableCopy();
+
+		if (availableCopy == null) {
+			System.out.println("No available copies for this book.");
+			return false;
+		}
+
+		availableCopy.changeAvailability(); // Mark the copy as checked out
+		CheckoutEntry entry = new CheckoutEntry(availableCopy, LocalDate.now());
+
+		member.addCheckoutEntry(entry); // Add entry to member's record
+		saveNewMember(member); // Save updated member data
+		book.updateCopies(availableCopy);
+		updateBookCopies(book);
+		return true;
 	}
 
 	@SuppressWarnings("unchecked")
-	public  HashMap<String,Book> readBooksMap() {
+	public HashMap<String,Book> readBooksMap() {
 		//Returns a Map with name/value pairs being
 		//   isbn -> Book
 		return (HashMap<String,Book>) readFromStorage(StorageType.BOOKS);
@@ -76,8 +117,7 @@ public class DataAccessFacade implements DataAccess {
 		return (HashMap<String, LibraryMember>) readFromStorage(
 				StorageType.MEMBERS);
 	}
-	
-	
+
 	@SuppressWarnings("unchecked")
 	public HashMap<String, User> readUserMap() {
 		//Returns a Map with name/value pairs being
@@ -101,14 +141,13 @@ public class DataAccessFacade implements DataAccess {
 	}
 	
 	/////load methods - these place test data into the storage area
-	///// - used just once at startup  
-	
-		
+	///// - used just once at startup
 	static void loadBookMap(List<Book> bookList) {
 		HashMap<String, Book> books = new HashMap<String, Book>();
 		bookList.forEach(book -> books.put(book.getIsbn(), book));
 		saveToStorage(StorageType.BOOKS, books);
 	}
+
 	static void loadUserMap(List<User> userList) {
 		HashMap<String, User> users = new HashMap<String, User>();
 		userList.forEach(user -> users.put(user.getId(), user));
@@ -157,10 +196,8 @@ public class DataAccessFacade implements DataAccess {
 		return retVal;
 	}
 	
-	
-	
 	final static class Pair<S,T> implements Serializable{
-		
+		private static final long serialVersionUID = 5399827794066637059L;
 		S first;
 		T second;
 		Pair(S s, T t) {
@@ -181,11 +218,11 @@ public class DataAccessFacade implements DataAccess {
 		public int hashCode() {
 			return first.hashCode() + 5 * second.hashCode();
 		}
+
 		@Override
 		public String toString() {
 			return "(" + first.toString() + ", " + second.toString() + ")";
 		}
-		private static final long serialVersionUID = 5399827794066637059L;
 	}
 	
 }

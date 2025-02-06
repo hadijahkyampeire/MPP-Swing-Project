@@ -1,6 +1,7 @@
 package business;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 final public class LibraryMember extends Person implements Serializable {
@@ -10,7 +11,8 @@ final public class LibraryMember extends Person implements Serializable {
 	
 	public LibraryMember(String memberId, String fname, String lname, String tel,Address add) {
 		super(fname,lname, tel, add);
-		this.memberId = memberId;		
+		this.memberId = memberId;
+		this.checkoutEntries = new ArrayList<CheckoutEntry>();
 	}
 	
 	public String getMemberId() {
@@ -18,6 +20,9 @@ final public class LibraryMember extends Person implements Serializable {
 	}
 
 	public void addCheckoutEntry(CheckoutEntry entry) {
+		if (checkoutEntries == null) {
+			checkoutEntries = new ArrayList<>(); // Extra safety check before adding
+		}
 		checkoutEntries.add(entry);
 	}
 

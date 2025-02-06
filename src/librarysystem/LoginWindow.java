@@ -2,9 +2,12 @@ package librarysystem;
 
 import dataaccess.DataAccessFacade;
 import dataaccess.User;
+import librarysystem.librarian.LibrarianDashboard;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class LoginWindow extends JFrame implements LibWindow {
 	public static final LoginWindow INSTANCE = new LoginWindow();
@@ -65,12 +68,12 @@ public class LoginWindow extends JFrame implements LibWindow {
 
 		// Form Panel (Right)
 		formPanel = new JPanel();
-		formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS)); // Stack elements
-		formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Reduce spacing
+		formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+		formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		JPanel inputFields = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.insets = new Insets(5, 5, 5, 5); // ✅ Reduce spacing
+		gbc.insets = new Insets(5, 5, 5, 5);
 		gbc.anchor = GridBagConstraints.WEST;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
@@ -80,7 +83,7 @@ public class LoginWindow extends JFrame implements LibWindow {
 
 		gbc.gridx = 1;
 		username = new JTextField();
-		username.setPreferredSize(new Dimension(150, 30)); // ✅ Reduce input width
+		username.setPreferredSize(new Dimension(150, 30));
 		inputFields.add(username, gbc);
 
 		gbc.gridx = 0;
@@ -89,52 +92,83 @@ public class LoginWindow extends JFrame implements LibWindow {
 
 		gbc.gridx = 1;
 		password = new JPasswordField();
-		password.setPreferredSize(new Dimension(150, 30)); // ✅ Reduce input width
+		password.setPreferredSize(new Dimension(150, 30));
 		inputFields.add(password, gbc);
 
 		formPanel.add(inputFields);
 
-
-		// Submit Button (Close to Form)
-		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 5)); // Centered & add spacing
+		// Submit Button
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 5));
 		loginButton = new JButton("Submit");
 
-// ✅ Style Button
+		// Style Button
 		loginButton.setOpaque(true);
-		loginButton.setContentAreaFilled(true); // ✅ Ensures background is filled
+		loginButton.setContentAreaFilled(true);
 		loginButton.setBorderPainted(false);
-		loginButton.setPreferredSize(new Dimension(120, 35)); // Consistent size
-		loginButton.setBackground(new Color(0, 31, 63)); // ✅ Navy Blue Background
-		loginButton.setForeground(Color.WHITE); // ✅ White Text
+		loginButton.setPreferredSize(new Dimension(120, 35));
+		loginButton.setBackground(new Color(0, 31, 63));
+		loginButton.setForeground(Color.WHITE);
 		loginButton.setFont(new Font("Arial", Font.BOLD, 14));
 		loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		loginButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15)); // Padding inside button
+		loginButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
 
-// ✅ Hover Effect (Lighter Blue)
+		// Hover Effect
 		loginButton.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				loginButton.setBackground(new Color(0, 64, 128)); // ✅ Lighter Blue on Hover
+				loginButton.setBackground(new Color(0, 64, 128));
 			}
 
 			@Override
 			public void mouseExited(java.awt.event.MouseEvent evt) {
-				loginButton.setBackground(new Color(0, 31, 63)); // ✅ Reset to Navy Blue
+				loginButton.setBackground(new Color(0, 31, 63));
 			}
 		});
+
+		// Initially disable the login button
+		loginButton.setEnabled(false);
 
 		addLoginButtonListener(loginButton);
 		buttonPanel.add(loginButton);
 
 		// Add Components in Order
 		formPanel.add(inputFields);
-		formPanel.add(Box.createVerticalStrut(2)); // Small gap
+		formPanel.add(Box.createVerticalStrut(2));
 		formPanel.add(buttonPanel);
 
 		// Add Image and Form Side by Side
 		middlePanel.add(imagePanel, BorderLayout.WEST);
 		middlePanel.add(formPanel, BorderLayout.CENTER);
+
+		// Add document listeners to enable/disable the login button
+		DocumentListener docListener = new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				updateLoginButtonState();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				updateLoginButtonState();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				updateLoginButtonState();
+			}
+		};
+
+		username.getDocument().addDocumentListener(docListener);
+		password.getDocument().addDocumentListener(docListener);
 	}
+
+	// Method to enable/disable login button
+	private void updateLoginButtonState() {
+		String user = username.getText().trim();
+		String pass = new String(password.getPassword()).trim();
+		loginButton.setEnabled(!user.isEmpty() && !pass.isEmpty());
+	}
+
 
 	private void addLoginButtonListener(JButton butn) {
 		butn.addActionListener(evt -> {
@@ -160,6 +194,10 @@ public class LoginWindow extends JFrame implements LibWindow {
 						ManagerDashboard.open();
 						break;
 				}
+
+				// Clear the input fields after successful login
+				this.username.setText("");  // Clear username field
+				this.password.setText("");  // Clear password field
 			} else {
 				JOptionPane.showMessageDialog(this, "Incorrect credentials.");
 			}

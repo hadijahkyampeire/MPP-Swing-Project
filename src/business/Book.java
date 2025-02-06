@@ -61,7 +61,6 @@ final public class Book implements Serializable {
 		return false;
 	}
 	
-	
 	@Override
 	public boolean equals(Object ob) {
 		if(ob == null) return false;
@@ -69,7 +68,6 @@ final public class Book implements Serializable {
 		Book b = (Book)ob;
 		return b.isbn.equals(isbn);
 	}
-	
 	
 	public boolean isAvailable() {
 		if(copies == null) {
@@ -79,9 +77,10 @@ final public class Book implements Serializable {
 				     .map(l -> l.isAvailable())
 				     .reduce(false, (x,y) -> x || y);
 	}
+
 	@Override
 	public String toString() {
-		return "isbn: " + isbn + ", maxLength: " + maxCheckoutLength + ", available: " + isAvailable();
+		return "isbn: " + isbn + ", maxLength: " + maxCheckoutLength;
 	}
 	
 	public int getNumCopies() {
@@ -113,10 +112,11 @@ final public class Book implements Serializable {
 		return availableCount;
 	}
 
-	public BookCopy getNextAvailableCopy() {	
+	public BookCopy getNextAvailableCopy() {
+		System.out.println(Arrays.stream(copies).count());
 		Optional<BookCopy> optional 
-			= Arrays.stream(copies)
-			        .filter(x -> x.isAvailable()).findFirst();
+			= Arrays.stream(copies).filter(x -> x.isAvailable()).findFirst();
+		System.out.println(optional);
 		return optional.isPresent() ? optional.get() : null;
 	}
 	
