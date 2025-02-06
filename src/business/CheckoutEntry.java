@@ -10,8 +10,8 @@ public class CheckoutEntry implements Serializable {
 
     public CheckoutEntry(BookCopy bookCopy, LocalDate checkoutDate) {
         this.bookCopy = bookCopy;
-        this.checkoutDate = checkoutDate.minusDays(25);
-        this.dueDate = this.checkoutDate.plusDays(bookCopy.getBook().getMaxCheckoutLength()); // Calculate due date based on checkout period
+        this.checkoutDate = checkoutDate;
+        this.dueDate = checkoutDate.plusDays(bookCopy.getBook().getMaxCheckoutLength()); // Calculate due date based on checkout period
         LocalDate returnDate = null;
     }
 
