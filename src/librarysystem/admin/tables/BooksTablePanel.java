@@ -138,26 +138,34 @@ public class BooksTablePanel extends JPanel {
             // Create Panel for Book Details
             JPanel detailsPanel = new JPanel();
             detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
-            detailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            detailsPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
             // General info
             detailsPanel.add(new JLabel("<html><b>ISBN:</b> " + book.getIsbn() + "</html>"));
-            detailsPanel.add(Box.createVerticalStrut(5));
+            detailsPanel.add(Box.createVerticalStrut(8));
             detailsPanel.add(new JLabel("<html><b>Title:</b> " + book.getTitle() + "</html>"));
-            detailsPanel.add(Box.createVerticalStrut(5));
+            detailsPanel.add(Box.createVerticalStrut(8));
             detailsPanel.add(new JLabel("<html><b>⏳Max Checkout:</b> " + book.getMaxCheckoutLength() + " days</html>"));
-            detailsPanel.add(Box.createVerticalStrut(5));
+            detailsPanel.add(Box.createVerticalStrut(4));
             // Authors
             String authors = book.getAuthors().stream()
                     .map(a -> a.getFirstName() + " " + a.getLastName() + " - " + a.getAddress())
                     .collect(Collectors.joining("<br>"));
-            detailsPanel.add(new JLabel("<html><b>👤 Authors:</b><br>" + (authors.isEmpty() ? "No Authors" : authors) + "</html>"));
+            JLabel authorsLabel = new JLabel("<html><b>👤 Authors:</b><br>" + (authors.isEmpty() ? "No Authors" : authors) + "</html>");
+            detailsPanel.add(authorsLabel);
             detailsPanel.add(Box.createVerticalStrut(5));
+
             // Book copies
             String copies = Arrays.stream(book.getCopies())
                     .map(copy -> "Copy #" + copy.getCopyNum() + " - " + (copy.isAvailable() ? "✅ Available" : "❌ Checked out"))
                     .collect(Collectors.joining("<br>"));
-            detailsPanel.add(new JLabel("<html><b>📚 Copies:</b><br>" + (copies.isEmpty() ? "No Copies" : copies) + "</html>"));
+            JLabel copiesLabel = new JLabel("<html><b>📚 Copies:</b><br>" + (copies.isEmpty() ? "No Copies" : copies) + "</html>");
+            detailsPanel.add(copiesLabel);
+            detailsPanel.add(Box.createVerticalStrut(10));
+
+            JScrollPane scrollPane = new JScrollPane(detailsPanel);
+            scrollPane.setPreferredSize(new Dimension(550, 400));
+            scrollPane.setBorder(null);
 
             JOptionPane.showMessageDialog(this, detailsPanel, "📘 Book Details", JOptionPane.INFORMATION_MESSAGE);
         }
